@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family-Friendly Venues Map - Bern</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        #container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Mobile summary bar */
+        #mobile-summary-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 16px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 1002;
+        }
+
+        #mobile-summary-bar .count {
+            font-size: 14px;
+            color: #333;
+        }
+
+        #mobile-filter-toggle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        #sheet-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.25);
+            z-index: 1000;
+        }
+
+        #sheet-backdrop.visible {
+            display: block;
+        }
+
+        #sidebar {
+            width: 350px;
+            background: #ffffff;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            z-index: 1001;
+            transition: transform 0.3s ease;
+        }
+
+        #sidebar.collapsed {
+            transform: translateX(-350px);
+        }
+
+        #sidebar-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        #sidebar-header h2 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+        }
+
+        #search-container {
+            position: relative;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        #search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        #search-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-top: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+
+        #search-dropdown.show {
+            display: block;
+        }
+
+        .search-dropdown-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+
+        .search-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-dropdown-item:hover {
+            background: #f8f9fa;
+        }
+
+        .search-dropdown-item strong {
+            color: #667eea;
+        }
+
+        #filters-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .filter-category {
+            margin-bottom: 25px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            padding: 12px;
+            background: #fafbff;
+        }
+
+        .filter-category h3 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .filter-category h3::after {
+            content: '▾';
+            font-size: 12px;
+            color: #667eea;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-category.collapsed .filter-buttons {
+            display: none;
+        }
+
+        .filter-category.collapsed h3::after {
+            content: '▸';
+        }
+
+        .filter-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #495057;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .filter-button:hover {
+            background: #e9ecef;
+            border-color: #dee2e6;
+        }
+
+        .filter-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+        }
+
+        .filter-button .count {
+            font-size: 11px;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        .filter-button.active .count {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #active-filters {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #filter-count {
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        #clear-filters {
+            background: none;
+            border: 1px solid #667eea;
+            color: #667eea;
+            padding: 6px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        #clear-filters:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        #clear-filters:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        #map {
+            flex: 1;
+            height: 100vh;
+        }
+
+        #toggle-sidebar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1001;
+            background: white;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 18px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        #result-count {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .leaflet-popup-content h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        .venue-tags {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .venue-tag {
+            background: #e9ecef;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #495057;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+            }
+
+            #container {
+                flex-direction: column;
+                min-height: 100dvh;
+            }
+
+            #mobile-summary-bar {
+                display: flex;
+            }
+
+            #sidebar {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                max-height: 70dvh;
+                transform: translateY(100%);
+                box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+                border-radius: 16px 16px 0 0;
+                transition: transform 0.3s ease;
+                padding-top: 12px;
+                padding-bottom: 20px;
+            }
+
+            #sidebar.show {
+                transform: translateY(0);
+            }
+
+            #filters-container {
+                max-height: 50dvh;
+                padding-top: 10px;
+            }
+
+            #active-filters {
+                position: sticky;
+                bottom: 0;
+                background: white;
+            }
+
+            #map {
+                height: calc(100dvh - 60px);
+                min-height: 50dvh;
+            }
+
+            #toggle-sidebar {
+                display: none !important;
+            }
+        }
+
+        /* Custom scrollbar */
+        #filters-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #filters-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        #filters-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        #filters-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Marker cluster styling */
+        .marker-cluster-small,
+        .marker-cluster-medium,
+        .marker-cluster-large {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .marker-cluster-small div,
+        .marker-cluster-medium div,
+        .marker-cluster-large div {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+
+        .marker-cluster {
+            background-clip: padding-box;
+        }
+
+        /* Image slider styles */
+        .venue-slider {
+            position: relative;
+            width: 100%;
+            margin-bottom: 10px;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        .venue-slider img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        .slider-container {
+            display: flex;
+            transition: transform 0.3s ease;
+            width: 100%;
+        }
+
+        .slider-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .slider-arrow:hover {
+            background: white;
+        }
+
+        .slider-arrow.prev {
+            left: 5px;
+        }
+
+        .slider-arrow.next {
+            right: 5px;
+        }
+
+        .slider-dots {
+            text-align: center;
+            padding: 5px 0;
+            position: absolute;
+            bottom: 5px;
+            width: 100%;
+        }
+
+        .slider-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            margin: 0 3px;
+        }
+
+        .slider-dot.active {
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="sheet-backdrop"></div>
+    <div id="mobile-summary-bar">
+        <span class="count">Showing <strong id="venue-count-mobile">0</strong> venues</span>
+        <button id="mobile-filter-toggle">Filters</button>
+    </div>
+    <div id="container">
+        <aside id="sidebar">
+            <div id="sidebar-header">
+                <h2>Find Venues</h2>
+                <div id="search-container">
+                    <input type="text" id="search-input" placeholder="Search by name, city, or address...">
+                    <span id="search-icon">🔍</span>
+                    <div id="search-dropdown"></div>
+                </div>
+            </div>
+
+            <div id="result-count">Showing <strong id="venue-count">0</strong> venues</div>
+
+            <div id="filters-container">
+                <div class="filter-category">
+                    <h3>Venue Type</h3>
+                    <div class="filter-buttons" id="venueType-filters"></div>
+                </div>
+
+                <div class="filter-category">
+                    <h3>Cuisine Type</h3>
+                    <div class="filter-buttons" id="cuisineType-filters"></div>
+                </div>
+
+                <div class="filter-category">
+                    <h3>Age Range</h3>
+                    <div class="filter-buttons" id="ageRange-filters"></div>
+                </div>
+
+                <div class="filter-category">
+                    <h3>Amenities</h3>
+                    <div class="filter-buttons" id="amenities-filters"></div>
+                </div>
+            </div>
+
+            <div id="active-filters">
+                <span id="filter-count">0 filters active</span>
+                <button id="clear-filters" disabled>Clear All</button>
+            </div>
+        </aside>
+
+        <div style="position: relative; flex: 1;">
+            <button id="toggle-sidebar">☰</button>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script>
+        // Venue data with filter tags
+        const venues = [
+            {
+                name: "BakeryBakery Länggasse",
+                address: "Falkenplatz 9, 3012 Bern",
+                city: "Bern",
+                description: "Vegan bakery cafe with play area for children ages 0-6",
+                hours: "Tue-Fri: 7am-6:30pm, Sat: 7am-5pm, Sun: 8am-5pm",
+                specialty: "Sourdough bread, croissants, and family-friendly atmosphere",
+                phone: "+41 31 301 00 67",
+                website: "https://www.bakerybakery.ch/",
+                fallbackCoords: [46.9511023, 7.4350785],
+                filters: {
+                    venueType: ["cafe"],
+                    cuisineType: ["vegan"],
+                    ageRange: ["baby", "toddler", "small-child"],
+                    amenities: ["play-area", "change-table"]
+                }
+            },
+            {
+                name: "BakeryBakery Breitenrain",
+                address: "Schärerstrasse 23, 3014 Bern",
+                city: "Bern",
+                description: "Vegan bakery cafe with play area for children ages 0-6",
+                hours: "Tue-Fri: 7am-6:30pm, Sat: 7am-5pm, Sun: 8am-5pm",
+                specialty: "Artisan vegan pastries and kid-friendly space",
+                phone: "+41 31 348 99 53",
+                website: "https://www.bakerybakery.ch/",
+                fallbackCoords: [46.9600797, 7.4589466],
+                filters: {
+                    venueType: ["cafe"],
+                    cuisineType: ["vegan"],
+                    ageRange: ["baby", "toddler", "small-child"],
+                    amenities: ["play-area", "change-table"]
+                }
+            },
+            {
+                name: "BakeryBakery GeWo",
+                address: "Gertrud-Woker-Strasse 3, 3012 Bern",
+                city: "Bern",
+                description: "Vegan bakery cafe with play area for children ages 0-6",
+                hours: "Tue-Fri: 7am-6:30pm, Sat: 7am-5pm, Sun: 8am-5pm",
+                specialty: "Fresh vegan baked goods and family space",
+                phone: "+41 31 348 99 53",
+                website: "https://www.bakerybakery.ch/",
+                fallbackCoords: [46.9519594, 7.4296162],
+                filters: {
+                    venueType: ["cafe"],
+                    cuisineType: ["vegan"],
+                    ageRange: ["baby", "toddler", "small-child"],
+                    amenities: ["play-area", "change-table"]
+                }
+            },
+            {
+                name: "Orangerie Elfenau",
+                address: "Elfenauweg 92, 3006 Bern",
+                city: "Bern",
+                description: "Elegant cafe and bistro in a historic orangery surrounded by beautiful gardens",
+                hours: "Wed-Sun: 11am-7pm (seasonal hours may vary)",
+                specialty: "Garden terrace and homemade cakes",
+                phone: "031 350 16 20",
+                website: "https://orangerieelfenau.ch/",
+                images: [
+                    "https://orangerieelfenau.ch/wp-content/uploads/img/Info/20251015_Kinderkunstausstellung.jpg"
+                ],
+                fallbackCoords: [46.9330368, 7.4659898],
+                filters: {
+                    venueType: ["cafe"],
+                    cuisineType: ["bistro"],
+                    ageRange: ["baby", "toddler", "small-child", "kid"],
+                    amenities: ["outdoor-seating", "playground", "friendly-spaces", "high-chair", "change-table"]
+                }
+            },
+            {
+                name: "Cafebar Haus der Generationen",
+                address: "Bahnhofplatz 2, 3011 Bern",
+                city: "Bern",
+                description: "Community cafe fostering intergenerational connections with play area for children",
+                hours: "Mon-Fri: 8am-8pm, Sat: 9am-6pm",
+                specialty: "Family-friendly atmosphere and fair-trade coffee",
+                phone: "+41 31 328 87 00",
+                website: "https://www.begh.ch/cafebar",
+                fallbackCoords: [46.9476764, 7.4391516],
+                filters: {
+                    venueType: ["cafe"],
+                    cuisineType: [],
+                    ageRange: ["baby", "toddler", "small-child"],
+                    amenities: ["play-area", "outdoor-seating", "change-table"]
+                }
+            },
+            {
+                name: "LIS Events - Love is Sweet",
+                address: "Socinstrasse 2, 4051 Basel",
+                city: "Basel",
+                description: "Creative craft atelier offering art workshops for children including jewelry, ceramics, painting, and more",
+                hours: "Workshop hours vary - check website for schedule",
+                specialty: "Art workshops and creative activities for kids",
+                phone: "Contact via website",
+                website: "https://loveissweet.ch/",
+                images: [
+                    "https://loveissweet.ch/cdn/shop/files/Love_is_sweet_lis_Atelier_socinstr._2_Workshops.jpg?v=1753937310&width=1500",
+                    "https://loveissweet.ch/cdn/shop/collections/Screenshot-20230524-235022-Gallery.jpg?v=1685092649&width=1500",
+                    "https://loveissweet.ch/cdn/shop/collections/20200505-134214.jpg?v=1657555682&width=1500"
+                ],
+                fallbackCoords: [47.5580748, 7.5792603],
+                filters: {
+                    venueType: ["craft-atelier"],
+                    cuisineType: [],
+                    ageRange: ["toddler", "small-child", "kid"],
+                    amenities: ["high-chair", "change-table"]
+                }
+            },
+            {
+                name: "Magical Cafe",
+                address: "Max Kämpf Platz 2, 4058 Basel",
+                city: "Basel",
+                description: "Family-friendly cafe with homemade cupcakes, coffee, and large indoor play area for children",
+                hours: "Tue-Fri: 10am-5pm (weekends reserved for private parties)",
+                specialty: "Homemade cupcakes and themed birthday parties",
+                phone: "+41 78 905 37 38",
+                website: "https://magicalcafe.ch/",
+                images: [
+                    "https://magicalcafe.ch/wp-content/uploads/2025/01/playcafe-spielcafe-familien-basel.jpg",
+                    "https://magicalcafe.ch/wp-content/uploads/2025/01/cake-shop-basel-cake-designer.jpg",
+                    "https://magicalcafe.ch/wp-content/uploads/2025/01/party-celebrate-basel.jpg"
+                ],
+                fallbackCoords: [47.5699729, 7.5995347],
+                filters: {
+                    venueType: ["cafe"],
+                    cuisineType: ["patisserie"],
+                    ageRange: ["baby", "toddler", "small-child"],
+                    amenities: ["play-area", "outdoor-seating", "high-chair", "change-table"]
+                }
+            }
+        ];
+
+        // Filter definitions
+        const filterDefinitions = {
+            venueType: [
+                { id: "cafe", label: "Cafe" },
+                { id: "craft-atelier", label: "Creative Atelier" }
+            ],
+            cuisineType: [
+                { id: "vegan", label: "Vegan" },
+                { id: "bistro", label: "Bistro" },
+                { id: "patisserie", label: "Patisserie" }
+            ],
+            ageRange: [
+                { id: "baby", label: "Baby (0-1)" },
+                { id: "toddler", label: "Toddler (2-3)" },
+                { id: "small-child", label: "Small Child (4-6)" },
+                { id: "kid", label: "Kid (7-12)" }
+            ],
+            amenities: [
+                { id: "playground", label: "Playground" },
+                { id: "outdoor-seating", label: "Outdoor Seating" },
+                { id: "play-area", label: "Play Area" },
+                { id: "friendly-spaces", label: "Friendly Spaces Playbox" },
+                { id: "high-chair", label: "High Chair" },
+                { id: "change-table", label: "Change Table" }
+            ]
+        };
+
+        // Initialize map with zoom controls in bottom right
+        const map = L.map('map', {
+            zoomControl: false
+        });
+
+        // Add zoom control to bottom right
+        L.control.zoom({
+            position: 'bottomright'
+        }).addTo(map);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Initialize marker cluster group
+        let markerClusterGroup = L.markerClusterGroup({
+            maxClusterRadius: 150,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            disableClusteringAtZoom: 13,
+            spiderfyDistanceMultiplier: 1.5
+        });
+
+        // Add click event to zoom into clusters
+        markerClusterGroup.on('clusterclick', function (a) {
+            // Prevent default cluster click behavior
+            a.originalEvent.stopPropagation();
+
+            // Get the bounds and zoom manually
+            const bounds = a.layer.getBounds();
+
+            map.fitBounds(bounds, {
+                padding: [50, 50],
+                maxZoom: 14,
+                animate: true
+            });
+
+            // Force refresh after animation
+            setTimeout(function() {
+                markerClusterGroup.refreshClusters();
+                map.invalidateSize();
+                setTimeout(function() {
+                    map.panBy([1, 0]);
+                    map.panBy([-1, 0]);
+                }, 50);
+            }, 400);
+        });
+
+        map.addLayer(markerClusterGroup);
+
+        // State
+        let markers = [];
+        let activeFilters = {
+            venueType: [],
+            cuisineType: [],
+            ageRange: [],
+            amenities: []
+        };
+        let searchQuery = '';
+        let isInitialLoad = true;
+        const sidebar = document.getElementById('sidebar');
+        const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
+        const sheetBackdrop = document.getElementById('sheet-backdrop');
+
+        // City coordinates for zoom
+        const cityCoordinates = {
+            'bern': [46.9480, 7.4474, 13],
+            'basel': [47.5596, 7.5886, 13]
+        };
+
+        const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+        function openFilterSheet() {
+            if (!isMobile()) return;
+            sidebar.classList.add('show');
+            sheetBackdrop.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFilterSheet(force = false) {
+            if (!isMobile() && !force) return;
+            sidebar.classList.remove('show');
+            sheetBackdrop.classList.remove('visible');
+            document.body.style.overflow = isMobile() ? 'auto' : 'hidden';
+        }
+
+        function setupAccordions() {
+            document.querySelectorAll('.filter-category h3').forEach(header => {
+                header.addEventListener('click', () => {
+                    if (!isMobile()) return;
+                    header.parentElement.classList.toggle('collapsed');
+                });
+            });
+        }
+
+        function collapseFiltersForMobile() {
+            const categories = document.querySelectorAll('.filter-category');
+
+            if (!isMobile()) {
+                categories.forEach(cat => cat.classList.remove('collapsed'));
+                return;
+            }
+
+            categories.forEach((cat, index) => {
+                cat.classList.toggle('collapsed', index !== 0);
+            });
+        }
+
+        function handleResize() {
+            collapseFiltersForMobile();
+            if (!isMobile()) {
+                closeFilterSheet(true);
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Helper: Count venues with specific filter
+        function countVenuesWithFilter(category, filterId) {
+            return venues.filter(v => v.filters[category].includes(filterId)).length;
+        }
+
+        // Create filter buttons
+        function createFilterButtons() {
+            Object.keys(filterDefinitions).forEach(category => {
+                const container = document.getElementById(`${category}-filters`);
+                filterDefinitions[category].forEach(filter => {
+                    const count = countVenuesWithFilter(category, filter.id);
+
+                    const button = document.createElement('button');
+                    button.className = 'filter-button';
+                    button.dataset.category = category;
+                    button.dataset.value = filter.id;
+
+                    const labelSpan = document.createElement('span');
+                    labelSpan.textContent = filter.label;
+
+                    const countSpan = document.createElement('span');
+                    countSpan.className = 'count';
+                    countSpan.textContent = count;
+
+                    button.appendChild(labelSpan);
+                    button.appendChild(countSpan);
+
+                    button.addEventListener('click', () => handleFilterClick(button, category, filter.id));
+
+                    container.appendChild(button);
+                });
+            });
+        }
+
+        // Handle filter button clicks
+        function handleFilterClick(button, category, value) {
+            button.classList.toggle('active');
+
+            if (button.classList.contains('active')) {
+                activeFilters[category].push(value);
+            } else {
+                activeFilters[category] = activeFilters[category].filter(v => v !== value);
+            }
+
+            updateMap();
+            updateFilterCount();
+        }
+
+        // Search functionality with dropdown
+        const searchInput = document.getElementById('search-input');
+        const searchDropdown = document.getElementById('search-dropdown');
+
+        function updateSearchDropdown(query) {
+            if (!query || query.length < 2) {
+                searchDropdown.classList.remove('show');
+                return;
+            }
+
+            const suggestions = [];
+
+            // Add matching cities
+            Object.keys(cityCoordinates).forEach(city => {
+                if (city.toLowerCase().includes(query)) {
+                    const venueCount = venues.filter(v => v.city.toLowerCase() === city.toLowerCase()).length;
+                    suggestions.push({
+                        type: 'city',
+                        name: city.charAt(0).toUpperCase() + city.slice(1),
+                        count: venueCount
+                    });
+                }
+            });
+
+            // Add matching venues
+            venues.forEach(venue => {
+                if (venue.name.toLowerCase().includes(query) ||
+                    venue.address.toLowerCase().includes(query)) {
+                    suggestions.push({
+                        type: 'venue',
+                        name: venue.name,
+                        city: venue.city,
+                        venue: venue
+                    });
+                }
+            });
+
+            if (suggestions.length === 0) {
+                searchDropdown.classList.remove('show');
+                return;
+            }
+
+            // Limit to 5 suggestions
+            const limitedSuggestions = suggestions.slice(0, 5);
+
+            searchDropdown.innerHTML = limitedSuggestions.map(s => {
+                if (s.type === 'city') {
+                    return `<div class="search-dropdown-item" data-type="city" data-city="${s.name.toLowerCase()}">
+                        <strong>📍 ${s.name}</strong> - ${s.count} venue${s.count !== 1 ? 's' : ''}
+                    </div>`;
+                } else {
+                    return `<div class="search-dropdown-item" data-type="venue" data-venue="${s.name}">
+                        ${s.name} <span style="color: #999;">- ${s.city}</span>
+                    </div>`;
+                }
+            }).join('');
+
+            searchDropdown.classList.add('show');
+
+            // Add click handlers
+            searchDropdown.querySelectorAll('.search-dropdown-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const type = item.dataset.type;
+                    if (type === 'city') {
+                        const city = item.dataset.city;
+                        handleCitySearch(city);
+                    } else {
+                        const venueName = item.dataset.venue;
+                        handleVenueSearch(venueName);
+                    }
+                });
+            });
+        }
+
+        function handleCitySearch(city) {
+            searchInput.value = city.charAt(0).toUpperCase() + city.slice(1);
+            searchQuery = city.toLowerCase();
+            searchDropdown.classList.remove('show');
+
+            // Zoom to city
+            const coords = cityCoordinates[city.toLowerCase()];
+            if (coords) {
+                map.setView([coords[0], coords[1]], coords[2]);
+            }
+
+            updateMap();
+        }
+
+        function handleVenueSearch(venueName) {
+            const venue = venues.find(v => v.name === venueName);
+            if (venue) {
+                searchInput.value = venue.name;
+                searchQuery = venue.name.toLowerCase();
+                searchDropdown.classList.remove('show');
+
+                // Zoom to venue
+                map.setView(venue.fallbackCoords, 15);
+
+                updateMap();
+
+                // Open venue popup after a short delay
+                setTimeout(() => {
+                    const marker = markers.find(m => m.venue.name === venueName);
+                    if (marker) {
+                        marker.marker.openPopup();
+                    }
+                }, 300);
+            }
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            updateSearchDropdown(searchQuery);
+            updateMap();
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && searchQuery) {
+                // Check if it's a city name
+                const cityMatch = Object.keys(cityCoordinates).find(city =>
+                    city === searchQuery ||
+                    searchQuery.includes(city)
+                );
+
+                if (cityMatch) {
+                    handleCitySearch(cityMatch);
+                } else {
+                    searchDropdown.classList.remove('show');
+                }
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+                searchDropdown.classList.remove('show');
+            }
+        });
+
+        // Clear filters
+        document.getElementById('clear-filters').addEventListener('click', () => {
+            // Remove active class from all filter buttons
+            document.querySelectorAll('.filter-button.active').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Reset active filters
+            Object.keys(activeFilters).forEach(key => {
+                activeFilters[key] = [];
+            });
+
+            // Clear search
+            document.getElementById('search-input').value = '';
+            searchQuery = '';
+
+            // Reset map view to show all venues
+            isInitialLoad = true;
+            updateMap();
+            updateFilterCount();
+        });
+
+        // Update filter count display
+        function updateFilterCount() {
+            const total = Object.values(activeFilters).flat().length;
+            const countEl = document.getElementById('filter-count');
+            const clearBtn = document.getElementById('clear-filters');
+
+            countEl.textContent = `${total} filter${total !== 1 ? 's' : ''} active`;
+            clearBtn.disabled = total === 0 && !searchQuery;
+
+            const mobileToggleEl = document.getElementById('mobile-filter-toggle');
+            if (mobileToggleEl) {
+                mobileToggleEl.textContent = total > 0 ? `Filters (${total})` : 'Filters';
+            }
+        }
+
+        // Check if venue matches filters
+        function venueMatchesFilters(venue) {
+            // Search filter
+            if (searchQuery) {
+                const searchMatch =
+                    venue.name.toLowerCase().includes(searchQuery) ||
+                    venue.address.toLowerCase().includes(searchQuery) ||
+                    venue.city.toLowerCase().includes(searchQuery);
+
+                if (!searchMatch) return false;
+            }
+
+            // Category filters (AND logic - venue must have ALL selected filters)
+            for (const [category, selectedFilters] of Object.entries(activeFilters)) {
+                if (selectedFilters.length > 0) {
+                    // Check if venue has ALL selected filters in this category
+                    const hasAllFilters = selectedFilters.every(filter =>
+                        venue.filters[category].includes(filter)
+                    );
+                    if (!hasAllFilters) return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Color scheme for filter categories
+        const categoryColors = {
+            venueType: '#3b82f6',      // Blue
+            cuisineType: '#10b981',    // Green
+            ageRange: '#f59e0b',       // Orange
+            amenities: '#8b5cf6'       // Purple
+        };
+
+        // Create popup content with color-coded tags and image slider
+        function createPopup(venue) {
+            const tagsByCategory = Object.entries(venue.filters)
+                .map(([category, values]) => {
+                    const color = categoryColors[category];
+                    const tags = values.map(v => {
+                        const def = filterDefinitions[category].find(f => f.id === v);
+                        const label = def ? def.label : v;
+                        return `<span class="venue-tag" style="background: ${color}; color: white;">${label}</span>`;
+                    }).join('');
+                    return tags;
+                })
+                .join('');
+
+            // Create Google Maps directions link
+            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address)}`;
+
+            // Website link (if available)
+            const websiteHtml = venue.website
+                ? `<p style="margin: 5px 0; font-size: 13px;"><strong>🌐</strong> <a href="${venue.website}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none;">Visit Website</a></p>`
+                : '';
+
+            // Image slider (if images available)
+            let sliderHtml = '';
+            if (venue.images && venue.images.length > 0) {
+                const sliderId = `slider-${venue.name.replace(/\s+/g, '-').toLowerCase()}`;
+                const imagesHtml = venue.images.map(img => `<img src="${img}" alt="${venue.name}">`).join('');
+                const dotsHtml = venue.images.map((_, i) =>
+                    `<span class="slider-dot ${i === 0 ? 'active' : ''}" data-slide="${i}"></span>`
+                ).join('');
+
+                sliderHtml = `
+                    <div class="venue-slider" id="${sliderId}">
+                        <div class="slider-container">${imagesHtml}</div>
+                        ${venue.images.length > 1 ? `
+                            <button class="slider-arrow prev" onclick="slideImage('${sliderId}', -1)">‹</button>
+                            <button class="slider-arrow next" onclick="slideImage('${sliderId}', 1)">›</button>
+                            <div class="slider-dots">${dotsHtml}</div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            return `
+                <div style="min-width: 280px; max-width: 320px;">
+                    ${sliderHtml}
+                    <h3 style="margin: 0 0 10px 0;">${venue.name}</h3>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>📍</strong> <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none;">${venue.address}</a></p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>📞</strong> ${venue.phone}</p>
+                    ${websiteHtml}
+                    <p style="margin: 8px 0; font-size: 13px;">${venue.description}</p>
+                    <p style="margin: 5px 0; font-size: 12px; color: #666;"><strong>Hours:</strong> ${venue.hours}</p>
+                    <p style="margin: 5px 0; font-size: 12px; color: #667eea;"><em>${venue.specialty}</em></p>
+                    <div class="venue-tags">${tagsByCategory}</div>
+                </div>
+            `;
+        }
+
+        // Update map markers
+        function updateMap() {
+            // Clear existing markers from cluster group
+            markerClusterGroup.clearLayers();
+            markers = [];
+
+            const bounds = L.latLngBounds([]);
+            let visibleCount = 0;
+
+            // Add markers for matching venues
+            venues.forEach(venue => {
+                if (venueMatchesFilters(venue)) {
+                    const coords = venue.fallbackCoords;
+                    const marker = L.marker(coords);
+                    marker.bindPopup(createPopup(venue));
+
+                    // Add marker to cluster group instead of directly to map
+                    markerClusterGroup.addLayer(marker);
+
+                    markers.push({ venue, marker, coords });
+                    bounds.extend(coords);
+                    visibleCount++;
+                }
+            });
+
+            // Update count
+            document.getElementById('venue-count').textContent = visibleCount;
+            const mobileCountEl = document.getElementById('venue-count-mobile');
+            if (mobileCountEl) {
+                mobileCountEl.textContent = visibleCount;
+            }
+
+            // Only auto-zoom on initial load
+            if (isInitialLoad) {
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds.pad(0.2));
+                } else {
+                    map.setView([46.9480, 7.4474], 13);
+                }
+                isInitialLoad = false;
+            }
+        }
+
+        if (mobileFilterToggle) {
+            mobileFilterToggle.addEventListener('click', () => {
+                if (sidebar.classList.contains('show')) {
+                    closeFilterSheet();
+                } else {
+                    openFilterSheet();
+                }
+            });
+        }
+
+        if (sheetBackdrop) {
+            sheetBackdrop.addEventListener('click', () => closeFilterSheet());
+        }
+
+        window.addEventListener('resize', handleResize);
+
+        // Image slider functionality
+        const sliderIndices = {};
+
+        function slideImage(sliderId, direction) {
+            const slider = document.getElementById(sliderId);
+            if (!slider) return;
+
+            const sliderContainer = slider.querySelector('.slider-container');
+            const images = sliderContainer.querySelectorAll('img');
+            const dots = slider.querySelectorAll('.slider-dot');
+
+            if (!sliderIndices[sliderId]) {
+                sliderIndices[sliderId] = 0;
+            }
+
+            // Calculate new index
+            sliderIndices[sliderId] = (sliderIndices[sliderId] + direction + images.length) % images.length;
+
+            // Update slider position
+            const translateX = -sliderIndices[sliderId] * 100;
+            sliderContainer.style.transform = `translateX(${translateX}%)`;
+
+            // Update dots
+            dots.forEach((dot, index) => {
+                if (index === sliderIndices[sliderId]) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        // Make slideImage globally accessible for onclick handlers
+        window.slideImage = slideImage;
+
+        // Initialize
+        createFilterButtons();
+        setupAccordions();
+        handleResize();
+        updateMap();
+        updateFilterCount();
+    </script>
+</body>
+</html>
