@@ -44,7 +44,7 @@
         }
 
         #mobile-filter-toggle {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1E52BA;
             color: white;
             border: none;
             border-radius: 20px;
@@ -117,7 +117,7 @@
 
         .language-toggle button.active {
             background: white;
-            color: #764ba2;
+            color: #1E52BA;
         }
 
         #search-container {
@@ -177,7 +177,7 @@
         }
 
         .search-dropdown-item strong {
-            color: #667eea;
+            color: #1E52BA;
         }
 
         #filters-container {
@@ -209,7 +209,7 @@
         .filter-category h3::after {
             content: '▾';
             font-size: 12px;
-            color: #667eea;
+            color: #1E52BA;
         }
 
         .filter-buttons {
@@ -247,8 +247,8 @@
         }
 
         .filter-button.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: #667eea;
+            background: #1E52BA;
+            border-color: #1E52BA;
             color: white;
         }
 
@@ -273,14 +273,14 @@
 
         #filter-count {
             font-size: 14px;
-            color: #667eea;
+            color: #1E52BA;
             font-weight: 600;
         }
 
         #clear-filters {
             background: none;
-            border: 1px solid #667eea;
-            color: #667eea;
+            border: 1px solid #1E52BA;
+            color: #1E52BA;
             padding: 6px 15px;
             border-radius: 20px;
             cursor: pointer;
@@ -289,7 +289,7 @@
         }
 
         #clear-filters:hover {
-            background: #667eea;
+            background: #1E52BA;
             color: white;
         }
 
@@ -328,7 +328,7 @@
 
         .leaflet-popup-content h3 {
             margin-top: 0;
-            color: #667eea;
+            color: #1E52BA;
         }
 
         .venue-tags {
@@ -423,13 +423,13 @@
         .marker-cluster-small,
         .marker-cluster-medium,
         .marker-cluster-large {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1E52BA;
         }
 
         .marker-cluster-small div,
         .marker-cluster-medium div,
         .marker-cluster-large div {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1E52BA;
             color: white;
             font-weight: bold;
         }
@@ -1340,7 +1340,7 @@
 
             // Website link (if available)
             const websiteHtml = venue.website
-                ? `<p style="margin: 5px 0; font-size: 13px;"><strong>🌐</strong> <a href="${venue.website}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none;">${visitWebsiteLabel}</a></p>`
+                ? `<p style="margin: 5px 0; font-size: 13px;"><strong>🌐</strong> <a href="${venue.website}" target="_blank" rel="noopener noreferrer" style="color: #1E52BA; text-decoration: none;">${visitWebsiteLabel}</a></p>`
                 : '';
 
             // Image slider (if images available)
@@ -1368,12 +1368,12 @@
                 <div style="min-width: 280px; max-width: 320px;">
                     ${sliderHtml}
                     <h3 style="margin: 0 0 10px 0;">${venue.name}</h3>
-                    <p style="margin: 5px 0; font-size: 13px;"><strong>📍</strong> <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none;">${venue.address}</a></p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>📍</strong> <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E52BA; text-decoration: none;">${venue.address}</a></p>
                     <p style="margin: 5px 0; font-size: 13px;"><strong>📞</strong> ${venue.phone}</p>
                     ${websiteHtml}
                     <p style="margin: 8px 0; font-size: 13px;">${venue.description}</p>
                     <p style="margin: 5px 0; font-size: 12px; color: #666;"><strong>${hoursLabel}:</strong> ${venue.hours}</p>
-                    <p style="margin: 5px 0; font-size: 12px; color: #667eea;"><strong>${specialtyLabel}:</strong> ${venue.specialty}</p>
+                    <p style="margin: 5px 0; font-size: 12px; color: #1E52BA;"><strong>${specialtyLabel}:</strong> ${venue.specialty}</p>
                     <div class="venue-tags">${tagsByCategory}</div>
                 </div>
             `;
