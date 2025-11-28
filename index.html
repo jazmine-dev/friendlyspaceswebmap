@@ -767,6 +767,14 @@
             return value !== undefined ? value : fallback;
         }
 
+        function formatPhoneHref(phone) {
+            if (!phone) return null;
+            if (/contact via website/i.test(phone)) return null;
+            const normalized = phone.replace(/[^+\d]/g, '');
+            if (!normalized || normalized.replace(/\D/g, '').length === 0) return null;
+            return `tel:${normalized}`;
+        }
+
         // Helper to get localized venue text fields
         function getVenueText(venue, field) {
             const localized = venue.i18n?.[field];
@@ -1424,6 +1432,7 @@
 
             // Create Google Maps directions link
             const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address)}`;
+            const phoneHref = formatPhoneHref(venue.phone);
 
             // Website link (if available)
             const websiteHtml = venue.website
@@ -1456,7 +1465,7 @@
                     ${sliderHtml}
                     <h3 style="margin: 0 0 10px 0;">${venue.name}</h3>
                     <p style="margin: 5px 0; font-size: 13px;"><strong>📍</strong> <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E52BA; text-decoration: none;">${venue.address}</a></p>
-                    <p style="margin: 5px 0; font-size: 13px;"><strong>📞</strong> ${venue.phone}</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>📞</strong> ${phoneHref ? `<a href="${phoneHref}" style="color: #1E52BA; text-decoration: none;">${venue.phone}</a>` : venue.phone}</p>
                     ${websiteHtml}
                     <p style="margin: 8px 0; font-size: 13px;">${localizedDescription}</p>
                     <p style="margin: 5px 0; font-size: 12px; color: #666;"><strong>${hoursLabel}:</strong> ${localizedHours}</p>
