@@ -84,11 +84,40 @@
             padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         #sidebar-header h2 {
             margin: 0 0 10px 0;
             font-size: 20px;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            gap: 6px;
+            align-self: flex-end;
+            background: rgba(255,255,255,0.12);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .language-toggle button {
+            border: none;
+            background: transparent;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .language-toggle button.active {
+            background: white;
+            color: #764ba2;
         }
 
         #search-container {
@@ -491,6 +520,10 @@
         <aside id="sidebar">
             <div id="sidebar-header">
                 <h2 id="sidebar-title">Find Venues</h2>
+                <div class="language-toggle" id="language-toggle">
+                    <button data-lang="de" class="active">DE</button>
+                    <button data-lang="fr">FR</button>
+                </div>
                 <div id="search-container">
                     <input type="text" id="search-input" placeholder="Search by name, city, or address...">
                     <span id="search-icon">🔍</span>
@@ -545,6 +578,7 @@
                     title: "Familienfreundliche Karte - Bern",
                     sidebarTitle: "Orte finden",
                     searchPlaceholder: "Nach Name, Stadt oder Adresse suchen...",
+                    languageLabel: "Sprache",
                     showingLabel: "Zeige",
                     venuesLabel: "Orte",
                     filtersLabel: "Filter",
@@ -598,6 +632,7 @@
                     title: "Carte des lieux familiaux - Berne",
                     sidebarTitle: "Trouver des lieux",
                     searchPlaceholder: "Rechercher par nom, ville ou adresse...",
+                    languageLabel: "Langue",
                     showingLabel: "Afficher",
                     venuesLabel: "lieux",
                     filtersLabel: "Filtres",
@@ -648,6 +683,8 @@
             }
         };
 
+        let currentLang = getPreferredLanguage();
+
         function getPreferredLanguage() {
             const params = new URLSearchParams(window.location.search);
             const fromQuery = params.get('lang')?.toLowerCase();
@@ -659,7 +696,6 @@
             return 'de'; // default to German
         }
 
-        const currentLang = getPreferredLanguage();
         document.documentElement.lang = currentLang;
 
         function translate(path, fallback) {
@@ -875,6 +911,32 @@
             renderCountWrappers();
         }
 
+        function updateLanguageToggleActive() {
+            const buttons = document.querySelectorAll('#language-toggle button');
+            buttons.forEach(btn => {
+                const lang = btn.getAttribute('data-lang');
+                btn.classList.toggle('active', lang === currentLang);
+            });
+        }
+
+        function setLanguage(lang, { skipUrlUpdate = false } = {}) {
+            if (!supportedLanguages.includes(lang)) return;
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            updateLanguageToggleActive();
+
+            if (!skipUrlUpdate) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('lang', lang);
+                history.replaceState({}, '', url.toString());
+            }
+
+            applyTranslations();
+            createFilterButtons();
+            updateFilterCount();
+            updateMap();
+        }
+
         function openFilterSheet() {
             if (!isMobile()) return;
             sidebar.classList.add('show');
@@ -930,6 +992,8 @@
         function createFilterButtons() {
             Object.keys(filterDefinitions).forEach(category => {
                 const container = document.getElementById(`${category}-filters`);
+                if (!container) return;
+                container.innerHTML = '';
 
                 const heading = document.querySelector(`[data-category-heading="${category}"]`);
                 if (heading) {
@@ -941,6 +1005,9 @@
 
                     const button = document.createElement('button');
                     button.className = 'filter-button';
+                    if (activeFilters[category].includes(filter.id)) {
+                        button.classList.add('active');
+                    }
                     button.dataset.category = category;
                     button.dataset.value = filter.id;
 
@@ -1351,13 +1418,21 @@
         // Make slideImage globally accessible for onclick handlers
         window.slideImage = slideImage;
 
+        // Language toggle handlers
+        const languageToggle = document.getElementById('language-toggle');
+        if (languageToggle) {
+            languageToggle.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const lang = btn.getAttribute('data-lang');
+                    setLanguage(lang);
+                });
+            });
+        }
+
         // Initialize
-        applyTranslations();
-        createFilterButtons();
+        setLanguage(currentLang, { skipUrlUpdate: true });
         setupAccordions();
         handleResize();
-        updateMap();
-        updateFilterCount();
     </script>
 </body>
 </html>
