@@ -490,7 +490,7 @@
     <div id="container">
         <aside id="sidebar">
             <div id="sidebar-header">
-                <h2>Find Venues</h2>
+                <h2 id="sidebar-title">Find Venues</h2>
                 <div id="search-container">
                     <input type="text" id="search-input" placeholder="Search by name, city, or address...">
                     <span id="search-icon">🔍</span>
@@ -502,22 +502,22 @@
 
             <div id="filters-container">
                 <div class="filter-category">
-                    <h3>Venue Type</h3>
+                    <h3 data-category-heading="venueType">Venue Type</h3>
                     <div class="filter-buttons" id="venueType-filters"></div>
                 </div>
 
                 <div class="filter-category">
-                    <h3>Cuisine Type</h3>
+                    <h3 data-category-heading="cuisineType">Cuisine Type</h3>
                     <div class="filter-buttons" id="cuisineType-filters"></div>
                 </div>
 
                 <div class="filter-category">
-                    <h3>Age Range</h3>
+                    <h3 data-category-heading="ageRange">Age Range</h3>
                     <div class="filter-buttons" id="ageRange-filters"></div>
                 </div>
 
                 <div class="filter-category">
-                    <h3>Amenities</h3>
+                    <h3 data-category-heading="amenities">Amenities</h3>
                     <div class="filter-buttons" id="amenities-filters"></div>
                 </div>
             </div>
@@ -537,6 +537,139 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script>
+        // Language support (German/French) with query param override (?lang=de|fr)
+        const supportedLanguages = ['de', 'fr'];
+        const translations = {
+            de: {
+                ui: {
+                    title: "Familienfreundliche Karte - Bern",
+                    sidebarTitle: "Orte finden",
+                    searchPlaceholder: "Nach Name, Stadt oder Adresse suchen...",
+                    showingLabel: "Zeige",
+                    venuesLabel: "Orte",
+                    filtersLabel: "Filter",
+                    clearFilters: "Alle löschen",
+                    filtersActive: (count) => count === 1 ? "1 Filter aktiv" : `${count} Filter aktiv`,
+                    filtersButton: (count) => count > 0 ? `Filter (${count})` : "Filter",
+                    cityCount: (count) => count === 1 ? "1 Ort" : `${count} Orte`,
+                },
+                filters: {
+                    categories: {
+                        venueType: "Ortstyp",
+                        cuisineType: "Küche",
+                        ageRange: "Altersgruppe",
+                        amenities: "Ausstattung"
+                    },
+                    options: {
+                        venueType: {
+                            cafe: "Café",
+                            "craft-atelier": "Kreativ-Atelier"
+                        },
+                        cuisineType: {
+                            vegan: "Vegan",
+                            bistro: "Bistro",
+                            patisserie: "Patisserie"
+                        },
+                        ageRange: {
+                            baby: "Baby (0-1)",
+                            toddler: "Kleinkind (2-3)",
+                            "small-child": "Kind (4-6)",
+                            kid: "Schulkind (7-12)"
+                        },
+                        amenities: {
+                            playground: "Spielplatz",
+                            "outdoor-seating": "Aussensitzplätze",
+                            "play-area": "Spielbereich",
+                            "friendly-spaces": "Friendly Spaces Playbox",
+                            "high-chair": "Kinderstuhl",
+                            "change-table": "Wickeltisch"
+                        }
+                    }
+                },
+                popup: {
+                    visitWebsite: "Webseite besuchen",
+                    hours: "Öffnungszeiten",
+                    specialty: "Besonderheit",
+                    directions: "Route planen"
+                }
+            },
+            fr: {
+                ui: {
+                    title: "Carte des lieux familiaux - Berne",
+                    sidebarTitle: "Trouver des lieux",
+                    searchPlaceholder: "Rechercher par nom, ville ou adresse...",
+                    showingLabel: "Afficher",
+                    venuesLabel: "lieux",
+                    filtersLabel: "Filtres",
+                    clearFilters: "Tout effacer",
+                    filtersActive: (count) => count === 1 ? "1 filtre actif" : `${count} filtres actifs`,
+                    filtersButton: (count) => count > 0 ? `Filtres (${count})` : "Filtres",
+                    cityCount: (count) => count === 1 ? "1 lieu" : `${count} lieux`,
+                },
+                filters: {
+                    categories: {
+                        venueType: "Type de lieu",
+                        cuisineType: "Type de cuisine",
+                        ageRange: "Tranche d'âge",
+                        amenities: "Équipements"
+                    },
+                    options: {
+                        venueType: {
+                            cafe: "Café",
+                            "craft-atelier": "Atelier créatif"
+                        },
+                        cuisineType: {
+                            vegan: "Végane",
+                            bistro: "Bistrot",
+                            patisserie: "Pâtisserie"
+                        },
+                        ageRange: {
+                            baby: "Bébé (0-1)",
+                            toddler: "Tout-petit (2-3)",
+                            "small-child": "Enfant (4-6)",
+                            kid: "Enfant (7-12)"
+                        },
+                        amenities: {
+                            playground: "Terrain de jeu",
+                            "outdoor-seating": "Terrasse extérieure",
+                            "play-area": "Aire de jeux",
+                            "friendly-spaces": "Friendly Spaces Playbox",
+                            "high-chair": "Chaise haute",
+                            "change-table": "Table à langer"
+                        }
+                    }
+                },
+                popup: {
+                    visitWebsite: "Visiter le site",
+                    hours: "Horaires",
+                    specialty: "Spécialité",
+                    directions: "Itinéraire"
+                }
+            }
+        };
+
+        function getPreferredLanguage() {
+            const params = new URLSearchParams(window.location.search);
+            const fromQuery = params.get('lang')?.toLowerCase();
+            if (fromQuery && supportedLanguages.includes(fromQuery)) return fromQuery;
+
+            const browser = (navigator.language || navigator.userLanguage || '').slice(0, 2).toLowerCase();
+            if (supportedLanguages.includes(browser)) return browser;
+
+            return 'de'; // default to German
+        }
+
+        const currentLang = getPreferredLanguage();
+        document.documentElement.lang = currentLang;
+
+        function translate(path, fallback) {
+            const segments = path.split('.');
+            const value =
+                segments.reduce((obj, key) => obj?.[key], translations[currentLang]) ??
+                segments.reduce((obj, key) => obj?.[key], translations['de']);
+            return value !== undefined ? value : fallback;
+        }
+
         // Venue data with filter tags
         const venues = [
             {
@@ -705,6 +838,43 @@
 
         const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
+        function renderCountWrappers() {
+            const resultCount = document.getElementById('result-count');
+            const mobileCount = document.querySelector('#mobile-summary-bar .count');
+            const showingLabel = translate('ui.showingLabel', 'Showing');
+            const venuesLabel = translate('ui.venuesLabel', 'venues');
+
+            if (resultCount) {
+                resultCount.innerHTML = `${showingLabel} <strong id="venue-count">0</strong> ${venuesLabel}`;
+            }
+
+            if (mobileCount) {
+                mobileCount.innerHTML = `${showingLabel} <strong id="venue-count-mobile">0</strong> ${venuesLabel}`;
+            }
+        }
+
+        function applyTranslations() {
+            document.title = translate('ui.title', document.title);
+            const sidebarTitle = document.getElementById('sidebar-title');
+            if (sidebarTitle) sidebarTitle.textContent = translate('ui.sidebarTitle', sidebarTitle.textContent);
+
+            const searchInputEl = document.getElementById('search-input');
+            if (searchInputEl) searchInputEl.placeholder = translate('ui.searchPlaceholder', searchInputEl.placeholder);
+
+            const mobileToggle = document.getElementById('mobile-filter-toggle');
+            if (mobileToggle) mobileToggle.textContent = translate('ui.filtersLabel', mobileToggle.textContent);
+
+            const clearBtn = document.getElementById('clear-filters');
+            if (clearBtn) clearBtn.textContent = translate('ui.clearFilters', clearBtn.textContent);
+
+            document.querySelectorAll('[data-category-heading]').forEach(heading => {
+                const cat = heading.getAttribute('data-category-heading');
+                heading.textContent = translate(`filters.categories.${cat}`, heading.textContent);
+            });
+
+            renderCountWrappers();
+        }
+
         function openFilterSheet() {
             if (!isMobile()) return;
             sidebar.classList.add('show');
@@ -760,6 +930,12 @@
         function createFilterButtons() {
             Object.keys(filterDefinitions).forEach(category => {
                 const container = document.getElementById(`${category}-filters`);
+
+                const heading = document.querySelector(`[data-category-heading="${category}"]`);
+                if (heading) {
+                    heading.textContent = translate(`filters.categories.${category}`, heading.textContent);
+                }
+
                 filterDefinitions[category].forEach(filter => {
                     const count = countVenuesWithFilter(category, filter.id);
 
@@ -769,7 +945,8 @@
                     button.dataset.value = filter.id;
 
                     const labelSpan = document.createElement('span');
-                    labelSpan.textContent = filter.label;
+                    const labelText = translate(`filters.options.${category}.${filter.id}`, filter.label || filter.id);
+                    labelSpan.textContent = typeof labelText === 'function' ? labelText() : labelText;
 
                     const countSpan = document.createElement('span');
                     countSpan.className = 'count';
@@ -815,10 +992,11 @@
             Object.keys(cityCoordinates).forEach(city => {
                 if (city.toLowerCase().includes(query)) {
                     const venueCount = venues.filter(v => v.city.toLowerCase() === city.toLowerCase()).length;
+                    const countLabel = translate('ui.cityCount', `${venueCount} venues`);
                     suggestions.push({
                         type: 'city',
                         name: city.charAt(0).toUpperCase() + city.slice(1),
-                        count: venueCount
+                        count: typeof countLabel === 'function' ? countLabel(venueCount) : countLabel
                     });
                 }
             });
@@ -847,7 +1025,7 @@
             searchDropdown.innerHTML = limitedSuggestions.map(s => {
                 if (s.type === 'city') {
                     return `<div class="search-dropdown-item" data-type="city" data-city="${s.name.toLowerCase()}">
-                        <strong>📍 ${s.name}</strong> - ${s.count} venue${s.count !== 1 ? 's' : ''}
+                        <strong>📍 ${s.name}</strong> - ${s.count}
                     </div>`;
                 } else {
                     return `<div class="search-dropdown-item" data-type="venue" data-venue="${s.name}">
@@ -966,12 +1144,20 @@
             const countEl = document.getElementById('filter-count');
             const clearBtn = document.getElementById('clear-filters');
 
-            countEl.textContent = `${total} filter${total !== 1 ? 's' : ''} active`;
+            const filterActiveText = translate('ui.filtersActive');
+            countEl.textContent = typeof filterActiveText === 'function'
+                ? filterActiveText(total)
+                : `${total} filter${total !== 1 ? 's' : ''} active`;
             clearBtn.disabled = total === 0 && !searchQuery;
 
             const mobileToggleEl = document.getElementById('mobile-filter-toggle');
             if (mobileToggleEl) {
-                mobileToggleEl.textContent = total > 0 ? `Filters (${total})` : 'Filters';
+                const filtersButtonText = translate('ui.filtersButton');
+                if (typeof filtersButtonText === 'function') {
+                    mobileToggleEl.textContent = filtersButtonText(total);
+                } else {
+                    mobileToggleEl.textContent = filtersButtonText || (total > 0 ? `Filters (${total})` : 'Filters');
+                }
             }
         }
 
@@ -1011,6 +1197,10 @@
 
         // Create popup content with color-coded tags and image slider
         function createPopup(venue) {
+            const visitWebsiteLabel = translate('popup.visitWebsite', 'Visit Website');
+            const hoursLabel = translate('popup.hours', 'Hours');
+            const specialtyLabel = translate('popup.specialty', 'Specialty');
+
             const tagsByCategory = Object.entries(venue.filters)
                 .map(([category, values]) => {
                     const color = categoryColors[category];
@@ -1028,7 +1218,7 @@
 
             // Website link (if available)
             const websiteHtml = venue.website
-                ? `<p style="margin: 5px 0; font-size: 13px;"><strong>🌐</strong> <a href="${venue.website}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none;">Visit Website</a></p>`
+                ? `<p style="margin: 5px 0; font-size: 13px;"><strong>🌐</strong> <a href="${venue.website}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none;">${visitWebsiteLabel}</a></p>`
                 : '';
 
             // Image slider (if images available)
@@ -1060,8 +1250,8 @@
                     <p style="margin: 5px 0; font-size: 13px;"><strong>📞</strong> ${venue.phone}</p>
                     ${websiteHtml}
                     <p style="margin: 8px 0; font-size: 13px;">${venue.description}</p>
-                    <p style="margin: 5px 0; font-size: 12px; color: #666;"><strong>Hours:</strong> ${venue.hours}</p>
-                    <p style="margin: 5px 0; font-size: 12px; color: #667eea;"><em>${venue.specialty}</em></p>
+                    <p style="margin: 5px 0; font-size: 12px; color: #666;"><strong>${hoursLabel}:</strong> ${venue.hours}</p>
+                    <p style="margin: 5px 0; font-size: 12px; color: #667eea;"><strong>${specialtyLabel}:</strong> ${venue.specialty}</p>
                     <div class="venue-tags">${tagsByCategory}</div>
                 </div>
             `;
@@ -1162,6 +1352,7 @@
         window.slideImage = slideImage;
 
         // Initialize
+        applyTranslations();
         createFilterButtons();
         setupAccordions();
         handleResize();
