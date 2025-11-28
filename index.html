@@ -767,6 +767,15 @@
             return value !== undefined ? value : fallback;
         }
 
+        // Helper to get localized venue text fields
+        function getVenueText(venue, field) {
+            const localized = venue.i18n?.[field];
+            if (localized && typeof localized === 'object') {
+                return localized[currentLang] || localized['de'] || localized['en'] || venue[field] || '';
+            }
+            return venue[field] || '';
+        }
+
         // Venue data with filter tags
         const venues = [
             {
@@ -774,6 +783,20 @@
                 address: "Elfenauweg 92, 3006 Bern",
                 city: "Bern",
                 description: "Elegant cafe and bistro in a historic orangery surrounded by beautiful gardens",
+                i18n: {
+                    description: {
+                        de: "Elegantes Café und Bistro in einer historischen Orangerie mit Gartenambiente",
+                        fr: "Café-bistro élégant dans une orangerie historique entourée de jardins"
+                    },
+                    hours: {
+                        de: "Mi-So: 11-19 Uhr (Saisonzeiten können variieren)",
+                        fr: "Mer-dim : 11h-19h (horaires saisonniers variables)"
+                    },
+                    specialty: {
+                        de: "Gartenterrasse und hausgemachte Kuchen",
+                        fr: "Terrasse jardin et gâteaux maison"
+                    }
+                },
                 hours: "Wed-Sun: 11am-7pm (seasonal hours may vary)",
                 specialty: "Garden terrace and homemade cakes",
                 phone: "031 350 16 20",
@@ -794,6 +817,20 @@
                 address: "Socinstrasse 2, 4051 Basel",
                 city: "Basel",
                 description: "Creative craft atelier offering art workshops for children including jewelry, ceramics, painting, and more",
+                i18n: {
+                    description: {
+                        de: "Kreatives Atelier mit Kunstworkshops für Kinder, darunter Schmuck, Keramik, Malen und mehr",
+                        fr: "Atelier créatif proposant des ateliers d'art pour enfants : bijoux, céramique, peinture et plus"
+                    },
+                    hours: {
+                        de: "Workshop-Zeiten variieren – siehe Website für den Plan",
+                        fr: "Horaires des ateliers variables – consulter le site pour le planning"
+                    },
+                    specialty: {
+                        de: "Kunstworkshops und kreative Aktivitäten für Kinder",
+                        fr: "Ateliers d'art et activités créatives pour enfants"
+                    }
+                },
                 hours: "Workshop hours vary - check website for schedule",
                 specialty: "Art workshops and creative activities for kids",
                 phone: "Contact via website",
@@ -816,6 +853,20 @@
                 address: "Max Kämpf Platz 2, 4058 Basel",
                 city: "Basel",
                 description: "Family-friendly cafe with homemade cupcakes, coffee, and large indoor play area for children",
+                i18n: {
+                    description: {
+                        de: "Familienfreundliches Café mit hausgemachten Cupcakes, Kaffee und grossem Indoor-Spielbereich",
+                        fr: "Café familial avec cupcakes maison, café et grande aire de jeux intérieure"
+                    },
+                    hours: {
+                        de: "Di-Fr: 10-17 Uhr (Wochenenden für Privatfeiern reserviert)",
+                        fr: "Mar-ven : 10h-17h (week-ends réservés aux fêtes privées)"
+                    },
+                    specialty: {
+                        de: "Hausgemachte Cupcakes und thematische Geburtstagsfeiern",
+                        fr: "Cupcakes maison et fêtes d'anniversaire à thème"
+                    }
+                },
                 hours: "Tue-Fri: 10am-5pm (weekends reserved for private parties)",
                 specialty: "Homemade cupcakes and themed birthday parties",
                 phone: "+41 78 905 37 38",
@@ -1355,6 +1406,10 @@
             const hoursLabel = translate('popup.hours', 'Hours');
             const specialtyLabel = translate('popup.specialty', 'Specialty');
 
+            const localizedDescription = getVenueText(venue, 'description');
+            const localizedHours = getVenueText(venue, 'hours');
+            const localizedSpecialty = getVenueText(venue, 'specialty');
+
             const tagsByCategory = Object.entries(venue.filters)
                 .map(([category, values]) => {
                     const color = categoryColors[category];
@@ -1403,9 +1458,9 @@
                     <p style="margin: 5px 0; font-size: 13px;"><strong>📍</strong> <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E52BA; text-decoration: none;">${venue.address}</a></p>
                     <p style="margin: 5px 0; font-size: 13px;"><strong>📞</strong> ${venue.phone}</p>
                     ${websiteHtml}
-                    <p style="margin: 8px 0; font-size: 13px;">${venue.description}</p>
-                    <p style="margin: 5px 0; font-size: 12px; color: #666;"><strong>${hoursLabel}:</strong> ${venue.hours}</p>
-                    <p style="margin: 5px 0; font-size: 12px; color: #1E52BA;"><strong>${specialtyLabel}:</strong> ${venue.specialty}</p>
+                    <p style="margin: 8px 0; font-size: 13px;">${localizedDescription}</p>
+                    <p style="margin: 5px 0; font-size: 12px; color: #666;"><strong>${hoursLabel}:</strong> ${localizedHours}</p>
+                    <p style="margin: 5px 0; font-size: 12px; color: #1E52BA;"><strong>${specialtyLabel}:</strong> ${localizedSpecialty}</p>
                     <div class="venue-tags">${tagsByCategory}</div>
                 </div>
             `;
