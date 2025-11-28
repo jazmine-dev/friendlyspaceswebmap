@@ -1427,7 +1427,8 @@
                     const color = categoryColors[category];
                     const tags = values.map(v => {
                         const def = filterDefinitions[category].find(f => f.id === v);
-                        const label = def ? def.label : v;
+                        const translated = translate(`filters.options.${category}.${v}`, def?.label || v);
+                        const label = typeof translated === 'function' ? translated() : translated;
                         return `<span class="venue-tag" style="background: ${color}; color: white;">${label}</span>`;
                     }).join('');
                     return tags;
