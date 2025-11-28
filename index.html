@@ -779,7 +779,11 @@
         function getVenueText(venue, field) {
             const localized = venue.i18n?.[field];
             if (localized && typeof localized === 'object') {
-                return localized[currentLang] || localized['de'] || localized['en'] || venue[field] || '';
+                return localized[currentLang] ||
+                    venue[field] ||
+                    localized['en'] ||
+                    localized['de'] ||
+                    '';
             }
             return venue[field] || '';
         }
