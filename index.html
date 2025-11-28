@@ -811,6 +811,11 @@
                 },
                 hours: "Wed-Sun: 11am-7pm (seasonal hours may vary)",
                 specialty: "Garden terrace and homemade cakes",
+                seasonalNote: {
+                    de: "Derzeit geschlossen bis April (Saisonbetrieb)",
+                    fr: "Actuellement fermé jusqu'en avril (ouverture saisonnière)",
+                    en: "Currently closed until April (seasonal)"
+                },
                 phone: "+41 31 350 16 20",
                 website: "https://orangerieelfenau.ch/",
                 images: [
@@ -1417,6 +1422,9 @@
             const visitWebsiteLabel = translate('popup.visitWebsite', 'Visit Website');
             const hoursLabel = translate('popup.hours', 'Hours');
             const specialtyLabel = translate('popup.specialty', 'Specialty');
+            const seasonalNote = venue.seasonalNote
+                ? (venue.seasonalNote[currentLang] || venue.seasonalNote.en || venue.seasonalNote.de)
+                : null;
 
             const localizedDescription = getVenueText(venue, 'description');
             const localizedHours = getVenueText(venue, 'hours');
@@ -1474,6 +1482,7 @@
                     ${websiteHtml}
                     <p style="margin: 8px 0; font-size: 13px;">${localizedDescription}</p>
                     <p style="margin: 5px 0; font-size: 12px; color: #666;"><strong>${hoursLabel}:</strong> ${localizedHours}</p>
+                    ${seasonalNote ? `<p style="margin: 5px 0; font-size: 12px; color: #BA1E1E;"><strong>${seasonalNote}</strong></p>` : ''}
                     <p style="margin: 5px 0; font-size: 12px; color: #1E52BA;"><strong>${specialtyLabel}:</strong> ${localizedSpecialty}</p>
                     <div class="venue-tags">${tagsByCategory}</div>
                 </div>
