@@ -523,6 +523,7 @@
                 <div class="language-toggle" id="language-toggle">
                     <button data-lang="de" class="active">DE</button>
                     <button data-lang="fr">FR</button>
+                    <button data-lang="en">EN</button>
                 </div>
                 <div id="search-container">
                     <input type="text" id="search-input" placeholder="Search by name, city, or address...">
@@ -571,7 +572,7 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script>
         // Language support (German/French) with query param override (?lang=de|fr)
-        const supportedLanguages = ['de', 'fr'];
+        const supportedLanguages = ['de', 'fr', 'en'];
         const translations = {
             de: {
                 ui: {
@@ -679,6 +680,60 @@
                     hours: "Horaires",
                     specialty: "Spécialité",
                     directions: "Itinéraire"
+                }
+            },
+            en: {
+                ui: {
+                    title: "Family-Friendly Venues Map - Bern",
+                    sidebarTitle: "Find Venues",
+                    searchPlaceholder: "Search by name, city, or address...",
+                    languageLabel: "Language",
+                    showingLabel: "Showing",
+                    venuesLabel: "venues",
+                    filtersLabel: "Filters",
+                    clearFilters: "Clear All",
+                    filtersActive: (count) => count === 1 ? "1 filter active" : `${count} filters active`,
+                    filtersButton: (count) => count > 0 ? `Filters (${count})` : "Filters",
+                    cityCount: (count) => count === 1 ? "1 venue" : `${count} venues`,
+                },
+                filters: {
+                    categories: {
+                        venueType: "Venue Type",
+                        cuisineType: "Cuisine Type",
+                        ageRange: "Age Range",
+                        amenities: "Amenities"
+                    },
+                    options: {
+                        venueType: {
+                            cafe: "Cafe",
+                            "craft-atelier": "Creative Atelier"
+                        },
+                        cuisineType: {
+                            vegan: "Vegan",
+                            bistro: "Bistro",
+                            patisserie: "Patisserie"
+                        },
+                        ageRange: {
+                            baby: "Baby (0-1)",
+                            toddler: "Toddler (2-3)",
+                            "small-child": "Small Child (4-6)",
+                            kid: "Kid (7-12)"
+                        },
+                        amenities: {
+                            playground: "Playground",
+                            "outdoor-seating": "Outdoor Seating",
+                            "play-area": "Play Area",
+                            "friendly-spaces": "Friendly Spaces Playbox",
+                            "high-chair": "High Chair",
+                            "change-table": "Change Table"
+                        }
+                    }
+                },
+                popup: {
+                    visitWebsite: "Visit Website",
+                    hours: "Hours",
+                    specialty: "Specialty",
+                    directions: "Directions"
                 }
             }
         };
