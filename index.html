@@ -886,6 +886,32 @@
             spiderfyDistanceMultiplier: 1.5
         });
 
+        // Custom marker icon (brand blue gradient)
+        const pinSvg = `
+            <svg width="32" height="48" viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="pinGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+                        <stop offset="0%" stop-color="#2F6BE0"/>
+                        <stop offset="100%" stop-color="#1E52BA"/>
+                    </linearGradient>
+                    <filter id="pinShadow" x="-20%" y="-10%" width="140%" height="130%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.25)"/>
+                    </filter>
+                </defs>
+                <g filter="url(#pinShadow)">
+                    <path fill="url(#pinGrad)" d="M16 0c-7.18 0-13 5.82-13 13 0 9.75 8.9 18.9 12.1 21.83.5.46 1.3.46 1.8 0C20.1 31.9 29 22.75 29 13 29 5.82 23.18 0 16 0Z"/>
+                    <circle cx="16" cy="13" r="5" fill="rgba(255,255,255,0.9)"/>
+                </g>
+            </svg>
+        `;
+
+        const markerIcon = L.icon({
+            iconUrl: 'data:image/svg+xml;utf8,' + encodeURIComponent(pinSvg),
+            iconSize: [32, 48],
+            iconAnchor: [16, 46],
+            popupAnchor: [0, -42]
+        });
+
         // Add click event to zoom into clusters
         markerClusterGroup.on('clusterclick', function (a) {
             // Prevent default cluster click behavior
@@ -1398,7 +1424,7 @@
             venues.forEach(venue => {
                 if (venueMatchesFilters(venue)) {
                     const coords = venue.fallbackCoords;
-                    const marker = L.marker(coords);
+                    const marker = L.marker(coords, { icon: markerIcon });
                     marker.bindPopup(createPopup(venue));
 
                     // Add marker to cluster group instead of directly to map
