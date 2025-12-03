@@ -935,6 +935,12 @@
             zoomControl: false
         });
 
+        // Disable scroll zoom until the map is focused/clicked to prevent trapping page scroll
+        map.scrollWheelZoom.disable();
+        map.on('focus', () => map.scrollWheelZoom.enable());
+        map.on('blur', () => map.scrollWheelZoom.disable());
+        map.on('click', () => map.scrollWheelZoom.enable());
+
         // Add zoom control to bottom right
         L.control.zoom({
             position: 'bottomright'
