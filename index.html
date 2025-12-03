@@ -437,9 +437,11 @@
 
         .slider-container {
             display: flex;
-            transition: transform 0.3s ease;
-            width: 100%;
-            overflow: hidden;
+            width: auto;
+            min-width: 100%;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
         }
 
         .slider-arrow {
@@ -1507,6 +1509,9 @@
                         const target = e.popup.getLatLng();
                         map.panTo(target, { animate: true });
                         setTimeout(() => map.panBy([0, 80], { animate: true }), 150);
+
+                        const sliderEl = e.popup.getElement()?.querySelector('.slider-container');
+                        attachSliderScrollSync(sliderEl);
                     });
 
                     // Add marker to cluster group instead of directly to map
@@ -1570,9 +1575,10 @@
             // Calculate new index
             sliderIndices[sliderId] = (sliderIndices[sliderId] + direction + images.length) % images.length;
 
-            // Update slider position
-            const translateX = -sliderIndices[sliderId] * 100;
-            sliderContainer.style.transform = `translateX(${translateX}%)`;
+            // Update slider position via scroll
+            const slideWidth = sliderContainer.clientWidth || slider.clientWidth;
+            const targetScroll = sliderIndices[sliderId] * slideWidth;
+            sliderContainer.scrollTo({ left: targetScroll, behavior: 'smooth' });
 
             // Update dots
             dots.forEach((dot, index) => {
@@ -1586,6 +1592,20 @@
 
         // Make slideImage globally accessible for onclick handlers
         window.slideImage = slideImage;
+
+        function attachSliderScrollSync(sliderEl) {
+            if (!sliderEl || sliderEl.dataset.bound === 'true') return;
+            const sliderId = sliderEl.closest('.venue-slider')?.id;
+            if (!sliderId) return;
+            sliderEl.dataset.bound = 'true';
+            const dots = sliderEl.parentElement.querySelectorAll('.slider-dot');
+            sliderEl.addEventListener('scroll', () => {
+                const slideWidth = sliderEl.clientWidth || 1;
+                const idx = Math.round(sliderEl.scrollLeft / slideWidth);
+                sliderIndices[sliderId] = idx;
+                dots.forEach((dot, i) => dot.classList.toggle('active', i === idx));
+            });
+        }
 
         // Initialize
         setLanguage(currentLang, { skipUrlUpdate: true });
