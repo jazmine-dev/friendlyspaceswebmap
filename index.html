@@ -95,29 +95,7 @@
         }
 
         .language-toggle {
-            display: inline-flex;
-            gap: 6px;
-            align-self: flex-end;
-            background: rgba(255,255,255,0.12);
-            padding: 4px;
-            border-radius: 10px;
-        }
-
-        .language-toggle button {
-            border: none;
-            background: transparent;
-            color: white;
-            padding: 6px 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 12px;
-            transition: background 0.2s, color 0.2s;
-        }
-
-        .language-toggle button.active {
-            background: white;
-            color: #1E52BA;
+            display: none;
         }
 
         #search-container {
@@ -521,11 +499,6 @@
         <aside id="sidebar">
             <div id="sidebar-header">
                 <h2 id="sidebar-title">Find Venues</h2>
-                <div class="language-toggle" id="language-toggle">
-                    <button data-lang="de" class="active">DE</button>
-                    <button data-lang="fr">FR</button>
-                    <button data-lang="en">EN</button>
-                </div>
                 <div id="search-container">
                     <input type="text" id="search-input" placeholder="Search by name, city, or address...">
                     <span id="search-icon" aria-hidden="true">
@@ -1084,7 +1057,6 @@
             if (!supportedLanguages.includes(lang)) return;
             currentLang = lang;
             document.documentElement.lang = lang;
-            updateLanguageToggleActive();
 
             if (!skipUrlUpdate) {
                 const url = new URL(window.location.href);
@@ -1588,17 +1560,6 @@
 
         // Make slideImage globally accessible for onclick handlers
         window.slideImage = slideImage;
-
-        // Language toggle handlers
-        const languageToggle = document.getElementById('language-toggle');
-        if (languageToggle) {
-            languageToggle.querySelectorAll('button').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const lang = btn.getAttribute('data-lang');
-                    setLanguage(lang);
-                });
-            });
-        }
 
         // Initialize
         setLanguage(currentLang, { skipUrlUpdate: true });
