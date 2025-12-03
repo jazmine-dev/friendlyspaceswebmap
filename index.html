@@ -438,8 +438,6 @@
             display: flex;
             transition: transform 0.3s ease;
             width: 100%;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
         }
 
         .slider-arrow {
@@ -492,12 +490,13 @@
 
         /* Popup sizing */
         .custom-popup .leaflet-popup-content-wrapper {
-            max-width: 340px;
-            width: clamp(260px, 70vw, 340px);
+            max-width: 280px;
         }
 
         .custom-popup .leaflet-popup-content {
             margin: 8px 10px;
+            max-height: 320px;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -917,7 +916,8 @@
 
         // Initialize map with zoom controls in bottom right
         const map = L.map('map', {
-            zoomControl: false
+            zoomControl: false,
+            closePopupOnClick: false
         });
 
         // Disable scroll zoom until the map is focused/clicked to prevent trapping page scroll
@@ -1495,8 +1495,10 @@
                     const marker = L.marker(coords, { icon: markerIcon });
                     marker.bindPopup(createPopup(venue), {
                         className: 'custom-popup',
-                        maxWidth: 320,
+                        maxWidth: 280,
                         minWidth: 240,
+                        closeOnClick: false,
+                        autoClose: false,
                         autoPanPaddingTopLeft: [40, 40],
                         autoPanPaddingBottomRight: [40, 40]
                     });
