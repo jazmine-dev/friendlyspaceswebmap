@@ -17,6 +17,7 @@
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
+            overflow-x: hidden;
         }
 
         #container {
@@ -432,6 +433,8 @@
             object-fit: cover;
             display: block;
             flex-shrink: 0;
+            flex: 0 0 100%;
+            scroll-snap-align: center;
         }
 
         .slider-container {
@@ -440,6 +443,7 @@
             width: 100%;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
+            gap: 0;
         }
 
         .slider-arrow {
@@ -492,12 +496,13 @@
 
         /* Popup sizing */
         .custom-popup .leaflet-popup-content-wrapper {
-            max-width: 340px;
-            width: clamp(260px, 70vw, 340px);
+            max-width: 320px;
+            width: clamp(260px, 75vw, 320px);
         }
 
         .custom-popup .leaflet-popup-content {
             margin: 8px 10px;
+            overflow-x: hidden;
         }
     </style>
 </head>
@@ -929,7 +934,7 @@
             map.scrollWheelZoom.enable();
 
             const target = e.originalEvent?.target;
-            const clickedMarker = target && (target.closest('.leaflet-marker-icon') || target.closest('.marker-cluster'));
+            const clickedMarker = target && (target.closest('.leaflet-marker-icon') || target.closest('.marker-cluster') || target.closest('.leaflet-popup'));
             if (!clickedMarker) {
                 map.closePopup();
             }
