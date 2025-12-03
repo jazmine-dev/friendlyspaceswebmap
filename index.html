@@ -1503,6 +1503,9 @@
                         autoPanPaddingTopLeft: [40, 40],
                         autoPanPaddingBottomRight: [40, 40]
                     });
+                    marker.on('popupopen', (e) => {
+                        map.panTo(e.popup.getLatLng(), { animate: true });
+                    });
 
                     // Add marker to cluster group instead of directly to map
                     markerClusterGroup.addLayer(marker);
