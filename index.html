@@ -1504,7 +1504,9 @@
                         autoPanPaddingBottomRight: [40, 40]
                     });
                     marker.on('popupopen', (e) => {
-                        map.panTo(e.popup.getLatLng(), { animate: true });
+                        const target = e.popup.getLatLng();
+                        map.panTo(target, { animate: true });
+                        setTimeout(() => map.panBy([0, 80], { animate: true }), 150);
                     });
 
                     // Add marker to cluster group instead of directly to map
