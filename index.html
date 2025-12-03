@@ -492,8 +492,8 @@
 
         /* Popup sizing */
         .custom-popup .leaflet-popup-content-wrapper {
-            max-width: 320px;
-            width: clamp(260px, 80vw, 320px);
+            max-width: 400px;
+            width: clamp(280px, 90vw, 400px);
         }
 
         .custom-popup .leaflet-popup-content {
@@ -1498,8 +1498,8 @@
                     const marker = L.marker(coords, { icon: markerIcon });
                     marker.bindPopup(createPopup(venue), {
                         className: 'custom-popup',
-                        maxWidth: 280,
-                        minWidth: 240,
+                        maxWidth: 380,
+                        minWidth: 260,
                         autoPanPaddingTopLeft: [40, 40],
                         autoPanPaddingBottomRight: [40, 40]
                     });
