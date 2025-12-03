@@ -1508,8 +1508,8 @@
                     marker.on('popupopen', (e) => {
                         const target = e.popup.getLatLng();
                         map.panTo(target, { animate: true });
-                        // Nudge popup down into view so top content isn't clipped
-                        setTimeout(() => map.panBy([0, -80], { animate: true }), 150);
+                        // Nudge popup fully into view; try a stronger upward pan
+                        setTimeout(() => map.panBy([0, -140], { animate: true }), 150);
 
                         const sliderEl = e.popup.getElement()?.querySelector('.slider-container');
                         attachSliderScrollSync(sliderEl);
