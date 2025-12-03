@@ -916,8 +916,7 @@
 
         // Initialize map with zoom controls in bottom right
         const map = L.map('map', {
-            zoomControl: false,
-            closePopupOnClick: false
+            zoomControl: false
         });
 
         // Disable scroll zoom until the map is focused/clicked to prevent trapping page scroll
@@ -1497,8 +1496,6 @@
                         className: 'custom-popup',
                         maxWidth: 280,
                         minWidth: 240,
-                        closeOnClick: false,
-                        autoClose: false,
                         autoPanPaddingTopLeft: [40, 40],
                         autoPanPaddingBottomRight: [40, 40]
                     });
