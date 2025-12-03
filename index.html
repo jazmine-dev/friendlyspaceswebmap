@@ -922,22 +922,15 @@
 
         // Initialize map with zoom controls in bottom right
         const map = L.map('map', {
-            zoomControl: false,
-            closePopupOnClick: false
+            zoomControl: false
         });
 
         // Disable scroll zoom until the map is focused/clicked to prevent trapping page scroll
         map.scrollWheelZoom.disable();
         map.on('focus', () => map.scrollWheelZoom.enable());
         map.on('blur', () => map.scrollWheelZoom.disable());
-        map.on('click', (e) => {
+        map.on('click', () => {
             map.scrollWheelZoom.enable();
-
-            const target = e.originalEvent?.target;
-            const clickedMarker = target && (target.closest('.leaflet-marker-icon') || target.closest('.marker-cluster') || target.closest('.leaflet-popup'));
-            if (!clickedMarker) {
-                map.closePopup();
-            }
         });
 
         // Add zoom control to bottom right
@@ -1511,10 +1504,14 @@
                         className: 'custom-popup',
                         maxWidth: 320,
                         minWidth: 240,
-                        closeOnClick: false,
-                        autoClose: false,
                         autoPanPaddingTopLeft: [40, 40],
                         autoPanPaddingBottomRight: [40, 40]
+                    });
+                    marker.on('click', (e) => {
+                        if (e.originalEvent && e.originalEvent.stopPropagation) {
+                            e.originalEvent.stopPropagation();
+                        }
+                        marker.openPopup();
                     });
 
                     // Add marker to cluster group instead of directly to map
