@@ -487,6 +487,17 @@
         .slider-dot.active {
             background: white;
         }
+
+        /* Popup sizing */
+        .custom-popup .leaflet-popup-content-wrapper {
+            max-width: 280px;
+        }
+
+        .custom-popup .leaflet-popup-content {
+            margin: 8px 10px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -1481,7 +1492,13 @@
                 if (venueMatchesFilters(venue)) {
                     const coords = venue.fallbackCoords;
                     const marker = L.marker(coords, { icon: markerIcon });
-                    marker.bindPopup(createPopup(venue));
+                    marker.bindPopup(createPopup(venue), {
+                        className: 'custom-popup',
+                        maxWidth: 280,
+                        minWidth: 240,
+                        autoPanPaddingTopLeft: [40, 40],
+                        autoPanPaddingBottomRight: [40, 40]
+                    });
 
                     // Add marker to cluster group instead of directly to map
                     markerClusterGroup.addLayer(marker);
