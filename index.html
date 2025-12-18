@@ -596,18 +596,21 @@
                     options: {
                         venueType: {
                             cafe: "Café",
-                            "craft-atelier": "Kreativ-Atelier"
+                            "craft-atelier": "Kreativ-Atelier",
+                            "food-hall": "Food Hall"
                         },
                         cuisineType: {
                             vegan: "Vegan",
                             bistro: "Bistro",
-                            patisserie: "Patisserie"
+                            patisserie: "Patisserie",
+                            international: "International"
                         },
                         ageRange: {
                             baby: "Baby (0-1)",
                             toddler: "Kleinkind (2-3)",
                             "small-child": "Kind (4-6)",
-                            kid: "Schulkind (7-12)"
+                            kid: "Schulkind (7-12)",
+                            "all-ages": "Alle Altersstufen"
                         },
                         amenities: {
                             playground: "Spielplatz",
@@ -615,7 +618,8 @@
                             "play-area": "Spielbereich",
                             "friendly-spaces": "Friendly Spaces Playbox",
                             "high-chair": "Kinderstuhl",
-                            "change-table": "Wickeltisch"
+                            "change-table": "Wickeltisch",
+                            "games-room": "Spielzimmer"
                         }
                     }
                 },
@@ -650,18 +654,21 @@
                     options: {
                         venueType: {
                             cafe: "Café",
-                            "craft-atelier": "Atelier créatif"
+                            "craft-atelier": "Atelier créatif",
+                            "food-hall": "Food Hall"
                         },
                         cuisineType: {
                             vegan: "Végane",
                             bistro: "Bistrot",
-                            patisserie: "Pâtisserie"
+                            patisserie: "Pâtisserie",
+                            international: "Cuisine internationale"
                         },
                         ageRange: {
                             baby: "Bébé (0-1)",
                             toddler: "Tout-petit (2-3)",
                             "small-child": "Jeune enfant (4-6)",
-                            kid: "Enfant (7-12)"
+                            kid: "Enfant (7-12)",
+                            "all-ages": "Tous âges"
                         },
                         amenities: {
                             playground: "Terrain de jeu",
@@ -669,7 +676,8 @@
                             "play-area": "Aire de jeux",
                             "friendly-spaces": "Friendly Spaces Playbox",
                             "high-chair": "Chaise haute",
-                            "change-table": "Table à langer"
+                            "change-table": "Table à langer",
+                            "games-room": "Salle de jeux"
                         }
                     }
                 },
@@ -704,18 +712,21 @@
                     options: {
                         venueType: {
                             cafe: "Cafe",
-                            "craft-atelier": "Creative Atelier"
+                            "craft-atelier": "Creative Atelier",
+                            "food-hall": "Food Hall"
                         },
                         cuisineType: {
                             vegan: "Vegan",
                             bistro: "Bistro",
-                            patisserie: "Patisserie"
+                            patisserie: "Patisserie",
+                            international: "International"
                         },
                         ageRange: {
                             baby: "Baby (0-1)",
                             toddler: "Toddler (2-3)",
                             "small-child": "Small Child (4-6)",
-                            kid: "Kid (7-12)"
+                            kid: "Kid (7-12)",
+                            "all-ages": "All ages"
                         },
                         amenities: {
                             playground: "Playground",
@@ -723,7 +734,8 @@
                             "play-area": "Play Area",
                             "friendly-spaces": "Friendly Spaces Playbox",
                             "high-chair": "High Chair",
-                            "change-table": "Change Table"
+                            "change-table": "Change Table",
+                            "games-room": "Games Room"
                         }
                     }
                 },
@@ -932,10 +944,10 @@
                 ],
                 fallbackCoords: [47.5660, 7.5950],
                 filters: {
-                    venueType: ["cafe"],
-                    cuisineType: ["bistro"],
-                    ageRange: ["baby", "toddler", "small-child", "kid"],
-                    amenities: ["high-chair", "change-table", "outdoor-seating"]
+                    venueType: ["food-hall"],
+                    cuisineType: ["international"],
+                    ageRange: ["all-ages"],
+                    amenities: ["play-area", "high-chair", "change-table", "games-room"]
                 }
             },
             {
@@ -983,18 +995,21 @@
         const filterDefinitions = {
             venueType: [
                 { id: "cafe", label: "Cafe" },
-                { id: "craft-atelier", label: "Creative Atelier" }
+                { id: "craft-atelier", label: "Creative Atelier" },
+                { id: "food-hall", label: "Food Hall" }
             ],
             cuisineType: [
                 { id: "vegan", label: "Vegan" },
                 { id: "bistro", label: "Bistro" },
-                { id: "patisserie", label: "Patisserie" }
+                { id: "patisserie", label: "Patisserie" },
+                { id: "international", label: "International" }
             ],
             ageRange: [
                 { id: "baby", label: "Baby (0-1)" },
                 { id: "toddler", label: "Toddler (2-3)" },
                 { id: "small-child", label: "Small Child (4-6)" },
-                { id: "kid", label: "Kid (7-12)" }
+                { id: "kid", label: "Kid (7-12)" },
+                { id: "all-ages", label: "All ages" }
             ],
             amenities: [
                 { id: "playground", label: "Playground" },
@@ -1002,7 +1017,8 @@
                 { id: "play-area", label: "Play Area" },
                 { id: "friendly-spaces", label: "Friendly Spaces Playbox" },
                 { id: "high-chair", label: "High Chair" },
-                { id: "change-table", label: "Change Table" }
+                { id: "change-table", label: "Change Table" },
+                { id: "games-room", label: "Games Room" }
             ]
         };
 
