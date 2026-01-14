@@ -1555,7 +1555,7 @@
             if (venue.images && venue.images.length > 0) {
                 const sliderId = `slider-${venue.name.replace(/\s+/g, '-').toLowerCase()}`;
                 const imagesHtml = venue.images.map((img, i) =>
-                    `<img src="${img}" alt="${venue.name}" loading="lazy" decoding="async" ${i === 0 ? 'fetchpriority="high"' : 'fetchpriority="low"'} width="320" height="150">`
+                    `<img src="${img}" alt="${venue.name}" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async" ${i === 0 ? 'fetchpriority="high"' : 'fetchpriority="low"'} width="320" height="150">`
                 ).join('');
                 const dotsHtml = venue.images.map((_, i) =>
                     `<span class="slider-dot ${i === 0 ? 'active' : ''}" data-slide="${i}"></span>`
