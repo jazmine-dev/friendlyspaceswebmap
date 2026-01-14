@@ -435,6 +435,7 @@
             flex: 0 0 100%;
             scroll-snap-align: center;
             scroll-snap-stop: always;
+            background: #f5f5f5;
         }
 
         .slider-container {
@@ -1553,7 +1554,9 @@
             let sliderHtml = '';
             if (venue.images && venue.images.length > 0) {
                 const sliderId = `slider-${venue.name.replace(/\s+/g, '-').toLowerCase()}`;
-                const imagesHtml = venue.images.map(img => `<img src="${img}" alt="${venue.name}">`).join('');
+                const imagesHtml = venue.images.map((img, i) =>
+                    `<img src="${img}" alt="${venue.name}" loading="lazy" decoding="async" ${i === 0 ? 'fetchpriority="high"' : 'fetchpriority="low"'} width="320" height="150">`
+                ).join('');
                 const dotsHtml = venue.images.map((_, i) =>
                     `<span class="slider-dot ${i === 0 ? 'active' : ''}" data-slide="${i}"></span>`
                 ).join('');
