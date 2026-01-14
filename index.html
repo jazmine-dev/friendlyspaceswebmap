@@ -496,8 +496,8 @@
 
         /* Popup sizing */
         .custom-popup .leaflet-popup-content-wrapper {
-            max-width: 400px;
-            width: clamp(280px, 90vw, 400px);
+            max-width: 340px;
+            width: clamp(260px, 70vw, 340px);
         }
 
         .custom-popup .leaflet-popup-content {
@@ -1571,7 +1571,7 @@
             }
 
             return `
-                <div style="min-width: 280px; max-width: 320px;">
+                <div style="min-width: 240px; max-width: 300px;">
                     ${sliderHtml}
                     <h3 style="margin: 0 0 10px 0;">${venue.name}</h3>
                     <p style="margin: 5px 0; font-size: 13px;"><strong>📍</strong> <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E52BA; text-decoration: none;">${venue.address}</a></p>
@@ -1602,8 +1602,8 @@
                     const marker = L.marker(coords, { icon: markerIcon });
                     marker.bindPopup(createPopup(venue), {
                         className: 'custom-popup',
-                        maxWidth: 380,
-                        minWidth: 260,
+                        maxWidth: 340,
+                        minWidth: 240,
                         autoPanPaddingTopLeft: [40, 40],
                         autoPanPaddingBottomRight: [40, 40]
                     });
