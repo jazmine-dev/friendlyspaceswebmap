@@ -319,6 +319,26 @@
             fill: none;
         }
 
+        .geo-feedback {
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%);
+            background: rgba(17, 24, 39, 0.9);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            z-index: 2000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .geo-feedback.show {
+            opacity: 1;
+        }
+
         #toggle-sidebar {
             position: absolute;
             top: 10px;
@@ -1099,6 +1119,23 @@
         const locateControl = L.control({ position: 'bottomright' });
         let userLocationHalo = null;
         let userLocationDot = null;
+        let geoFeedbackTimer = null;
+
+        function showGeoFeedback(message) {
+            let el = document.getElementById('geo-feedback');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'geo-feedback';
+                el.className = 'geo-feedback';
+                document.body.appendChild(el);
+            }
+            el.textContent = message;
+            el.classList.add('show');
+            if (geoFeedbackTimer) clearTimeout(geoFeedbackTimer);
+            geoFeedbackTimer = setTimeout(() => {
+                el.classList.remove('show');
+            }, 3000);
+        }
 
         function getGeolocationBlockReason() {
             if (!navigator.geolocation) {
@@ -1131,9 +1168,10 @@
             L.DomEvent.disableClickPropagation(container);
             L.DomEvent.disableScrollPropagation(container);
             container.querySelector('.locate-button').addEventListener('click', () => {
+                showGeoFeedback('Getting your location...');
                 const blockReason = getGeolocationBlockReason();
                 if (blockReason) {
-                    window.alert(blockReason);
+                    showGeoFeedback(blockReason);
                     return;
                 }
                 navigator.geolocation.getCurrentPosition(
@@ -1167,14 +1205,15 @@
                         }
 
                         map.setView(latLng, Math.max(map.getZoom(), 14), { animate: true });
+                        showGeoFeedback('Location found');
                     },
                     (error) => {
                         if (error?.code === error.PERMISSION_DENIED) {
-                            window.alert('Location permission was denied. Please allow location access for this site and try again.');
+                            showGeoFeedback('Location permission denied. Allow location access for this site.');
                         } else if (error?.code === error.TIMEOUT) {
-                            window.alert('Location request timed out. Please try again.');
+                            showGeoFeedback('Location request timed out. Please try again.');
                         } else {
-                            window.alert('Unable to get your location right now. Please try again.');
+                            showGeoFeedback('Unable to get location right now. Please try again.');
                         }
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
