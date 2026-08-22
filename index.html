@@ -4,6 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Family-Friendly Venues Map - Bern</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N294L2D9QJ"></script>
+    <script>
+        // The Wix page records the page view. The embedded map sends interaction
+        // events only, so visits are not counted twice in the same GA4 stream.
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+        window.gtag('consent', 'default', {
+            analytics_storage: 'denied',
+            ad_storage: 'denied',
+            ad_user_data: 'denied',
+            ad_personalization: 'denied',
+            wait_for_update: 500
+        });
+        window.gtag('js', new Date());
+        window.gtag('config', 'G-N294L2D9QJ', {
+            send_page_view: false,
+            anonymize_ip: true
+        });
+    </script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
@@ -638,6 +657,7 @@
                 },
                 popup: {
                     visitWebsite: "Webseite besuchen",
+                    visitInstagram: "Instagram öffnen",
                     hours: "Öffnungszeiten",
                     specialty: "Besonderheit",
                     directions: "Route planen"
@@ -695,6 +715,7 @@
                 },
                 popup: {
                     visitWebsite: "Visiter le site",
+                    visitInstagram: "Ouvrir Instagram",
                     hours: "Horaires",
                     specialty: "Spécialité",
                     directions: "Itinéraire"
@@ -752,6 +773,7 @@
                 },
                 popup: {
                     visitWebsite: "Visit Website",
+                    visitInstagram: "Open Instagram",
                     hours: "Hours",
                     specialty: "Specialty",
                     directions: "Directions"
@@ -760,6 +782,98 @@
         };
 
         let currentLang = getPreferredLanguage();
+        const ANALYTICS_SURFACE = 'web_map';
+        const KNOWN_PARTNER_IDS = {
+            'orangerie elfenau': 'orangerie-elfenau',
+            'love is sweet': 'love-is-sweet',
+            'love is sweet atelier': 'love-is-sweet',
+            'markthalle basel': 'markthalle-basel',
+            'bridge zurich': 'bridge-zurich',
+            'bridge zürich': 'bridge-zurich',
+            'klara 13': 'klara-basel',
+            'klara basel': 'klara-basel',
+            'magical cafe': 'magical-cafe-basel',
+            'magical café': 'magical-cafe-basel',
+            'magical cafe basel': 'magical-cafe-basel',
+            'magical café basel': 'magical-cafe-basel',
+            'sempre berna': 'sempre-berna',
+            'caffè bar sempre berna': 'sempre-berna',
+            'caffe bar sempre berna': 'sempre-berna',
+            'crafty crew': 'crafty-crew-workshops',
+            'crafty crew workshops': 'crafty-crew-workshops',
+            'jules unique': 'jules-unique'
+        };
+
+        function slugify(value) {
+            return String(value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/&/g, ' and ')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+        }
+
+        function getPartnerId(venue) {
+            if (venue?.slug) return venue.slug;
+            const normalizedName = String(venue?.name || '').trim().toLowerCase();
+            return KNOWN_PARTNER_IDS[normalizedName] || slugify(venue?.name);
+        }
+
+        function getPartnerCategory(venue) {
+            return venue?.filters?.venueType?.[0] || 'other';
+        }
+
+        function getVenueAnalyticsParams(venue) {
+            return {
+                partner_id: getPartnerId(venue),
+                partner_name: venue?.name || '',
+                partner_city: venue?.city || '',
+                partner_category: getPartnerCategory(venue),
+                surface: ANALYTICS_SURFACE,
+                map_language: currentLang
+            };
+        }
+
+        function trackEvent(eventName, parameters = {}) {
+            const eventParameters = {
+                ...parameters,
+                surface: parameters.surface || ANALYTICS_SURFACE,
+                map_language: parameters.map_language || currentLang
+            };
+
+            const debugMode = new URLSearchParams(window.location.search).get('analytics_debug') === '1';
+            if (debugMode) {
+                eventParameters.debug_mode = true;
+                const eventCount = Number(document.documentElement.dataset.analyticsEventCount || 0) + 1;
+                document.documentElement.dataset.analyticsEventCount = String(eventCount);
+                document.documentElement.dataset.lastAnalyticsEvent = eventName;
+                document.documentElement.dataset.lastAnalyticsPayload = JSON.stringify(eventParameters);
+            }
+
+            if (typeof window.gtag === 'function') {
+                window.gtag('event', eventName, eventParameters);
+            }
+
+            // Also make the event available to the Wix host page. This allows a
+            // future Wix/Velo listener to mirror events without changing the map.
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    source: 'friendly-spaces-map',
+                    type: 'analytics_event',
+                    event: eventName,
+                    parameters: eventParameters
+                }, 'https://www.friendlyspaces.ch');
+            }
+        }
+
+        function escapeHtmlAttribute(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
 
         function getPreferredLanguage() {
             const params = new URLSearchParams(window.location.search);
@@ -1159,6 +1273,9 @@
         };
         let searchQuery = '';
         let isInitialLoad = true;
+        let lastVisibleVenueCount = 0;
+        let searchTrackingTimer = null;
+        let lastTrackedSearchKey = '';
         const sidebar = document.getElementById('sidebar');
         const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
         const sheetBackdrop = document.getElementById('sheet-backdrop');
@@ -1170,6 +1287,42 @@
         };
 
         const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+        function sanitizeSearchTerm(value) {
+            const term = String(value || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+            if (!term || /@|https?:|www\.|(?:\d[\s().+-]*){7,}/i.test(term)) return '';
+            return term.replace(/[^\p{L}\p{N}\s'’.\-]/gu, '').trim();
+        }
+
+        function recordSearch(query, method = 'typing') {
+            const searchTerm = sanitizeSearchTerm(query);
+            if (searchTerm.length < 2) return;
+
+            const resultCount = venues.filter(venueMatchesFilters).length;
+            const trackingKey = `${searchTerm.toLowerCase()}|${resultCount}`;
+            if (trackingKey === lastTrackedSearchKey) return;
+            lastTrackedSearchKey = trackingKey;
+
+            const parameters = {
+                search_term: searchTerm,
+                search_method: method,
+                search_results: resultCount,
+                active_filter_count: Object.values(activeFilters).flat().length
+            };
+            trackEvent('search_use', parameters);
+            if (resultCount === 0) {
+                trackEvent('search_zero_results', parameters);
+            }
+        }
+
+        function scheduleSearchTracking(query) {
+            window.clearTimeout(searchTrackingTimer);
+            if (!query || query.length < 2) {
+                lastTrackedSearchKey = '';
+                return;
+            }
+            searchTrackingTimer = window.setTimeout(() => recordSearch(query), 900);
+        }
 
         function renderCountWrappers() {
             const resultCount = document.getElementById('result-count');
@@ -1328,6 +1481,7 @@
         // Handle filter button clicks
         function handleFilterClick(button, category, value) {
             button.classList.toggle('active');
+            const filterState = button.classList.contains('active') ? 'selected' : 'deselected';
 
             if (button.classList.contains('active')) {
                 activeFilters[category].push(value);
@@ -1337,6 +1491,13 @@
 
             updateMap();
             updateFilterCount();
+            trackEvent('filter_use', {
+                filter_category: category,
+                filter_value: value,
+                filter_state: filterState,
+                active_filter_count: Object.values(activeFilters).flat().length,
+                visible_venues: lastVisibleVenueCount
+            });
         }
 
         // Search functionality with dropdown
@@ -1426,6 +1587,7 @@
             }
 
             updateMap();
+            recordSearch(city, 'city_suggestion');
         }
 
         function handleVenueSearch(venueName) {
@@ -1439,6 +1601,7 @@
                 map.setView(venue.fallbackCoords, 15);
 
                 updateMap();
+                recordSearch(venue.name, 'venue_suggestion');
 
                 // Open venue popup after a short delay
                 setTimeout(() => {
@@ -1454,6 +1617,7 @@
             searchQuery = e.target.value.toLowerCase();
             updateSearchDropdown(searchQuery);
             updateMap();
+            scheduleSearchTracking(searchQuery);
         });
 
         searchInput.addEventListener('keydown', (e) => {
@@ -1468,6 +1632,7 @@
                     handleCitySearch(cityMatch);
                 } else {
                     searchDropdown.classList.remove('show');
+                    recordSearch(searchQuery, 'keyboard');
                 }
             }
         });
@@ -1481,6 +1646,8 @@
 
         // Clear filters
         document.getElementById('clear-filters').addEventListener('click', () => {
+            const clearedFilterCount = Object.values(activeFilters).flat().length;
+            const clearedSearch = Boolean(searchQuery);
             // Remove active class from all filter buttons
             document.querySelectorAll('.filter-button.active').forEach(btn => {
                 btn.classList.remove('active');
@@ -1499,6 +1666,11 @@
             isInitialLoad = true;
             updateMap();
             updateFilterCount();
+            trackEvent('filters_clear', {
+                cleared_filter_count: clearedFilterCount,
+                cleared_search: clearedSearch,
+                visible_venues: lastVisibleVenueCount
+            });
         });
 
         // Update filter count display
@@ -1561,6 +1733,7 @@
         // Create popup content with color-coded tags and image slider
         function createPopup(venue) {
             const visitWebsiteLabel = translate('popup.visitWebsite', 'Visit Website');
+            const visitInstagramLabel = translate('popup.visitInstagram', 'Open Instagram');
             const hoursLabel = translate('popup.hours', 'Hours');
             const specialtyLabel = translate('popup.specialty', 'Specialty');
             const seasonalNote = venue.seasonalNote
@@ -1587,10 +1760,14 @@
             // Create Google Maps directions link
             const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address)}`;
             const phoneHref = formatPhoneHref(venue.phone);
+            const partnerId = escapeHtmlAttribute(getPartnerId(venue));
 
             // Website link (if available)
             const websiteHtml = venue.website
-                ? `<p style="margin: 5px 0; font-size: 13px;"><strong>🌐</strong> <a href="${venue.website}" target="_blank" rel="noopener noreferrer" style="color: #1E52BA; text-decoration: none;">${visitWebsiteLabel}</a></p>`
+                ? `<p style="margin: 5px 0; font-size: 13px;"><strong>🌐</strong> <a href="${escapeHtmlAttribute(venue.website)}" target="_blank" rel="noopener noreferrer" data-analytics-action="website_click" data-partner-id="${partnerId}" style="color: #1E52BA; text-decoration: none;">${visitWebsiteLabel}</a></p>`
+                : '';
+            const instagramHtml = venue.instagram
+                ? `<p style="margin: 5px 0; font-size: 13px;"><strong>◎</strong> <a href="${escapeHtmlAttribute(venue.instagram)}" target="_blank" rel="noopener noreferrer" data-analytics-action="instagram_click" data-partner-id="${partnerId}" style="color: #1E52BA; text-decoration: none;">${visitInstagramLabel}</a></p>`
                 : '';
 
             // Image slider (if images available)
@@ -1620,9 +1797,10 @@
                 <div style="min-width: 240px; max-width: 300px;">
                     ${sliderHtml}
                     <h3 style="margin: 0 0 10px 0;">${venue.name}</h3>
-                    <p style="margin: 5px 0; font-size: 13px;"><strong>📍</strong> <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E52BA; text-decoration: none;">${venue.address}</a></p>
-                    <p style="margin: 5px 0; font-size: 13px;"><strong>📞</strong> ${phoneHref ? `<a href="${phoneHref}" style="color: #1E52BA; text-decoration: none;">${venue.phone}</a>` : venue.phone}</p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>📍</strong> <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" data-analytics-action="directions_click" data-partner-id="${partnerId}" style="color: #1E52BA; text-decoration: none;">${venue.address}</a></p>
+                    <p style="margin: 5px 0; font-size: 13px;"><strong>📞</strong> ${phoneHref ? `<a href="${escapeHtmlAttribute(phoneHref)}" data-analytics-action="call_click" data-partner-id="${partnerId}" style="color: #1E52BA; text-decoration: none;">${venue.phone}</a>` : venue.phone}</p>
                     ${websiteHtml}
+                    ${instagramHtml}
                     <p style="margin: 8px 0; font-size: 13px;">${localizedDescription}</p>
                     <p style="margin: 5px 0; font-size: 12px; color: #666;"><strong>${hoursLabel}:</strong> ${localizedHours}</p>
                     ${seasonalNote ? `<p style="margin: 5px 0; font-size: 12px; color: #BA1E1E;"><strong>${seasonalNote}</strong></p>` : ''}
@@ -1631,6 +1809,25 @@
                 </div>
             `;
         }
+
+        document.addEventListener('click', (event) => {
+            const analyticsLink = event.target.closest?.('[data-analytics-action]');
+            if (!analyticsLink) return;
+
+            const partnerId = analyticsLink.dataset.partnerId;
+            const venue = venues.find(item => getPartnerId(item) === partnerId);
+            let linkDomain = '';
+            try {
+                linkDomain = new URL(analyticsLink.href).hostname;
+            } catch (err) {
+                linkDomain = '';
+            }
+
+            trackEvent(analyticsLink.dataset.analyticsAction, {
+                ...getVenueAnalyticsParams(venue),
+                link_domain: linkDomain
+            });
+        });
 
         // Update map markers
         function updateMap() {
@@ -1654,6 +1851,7 @@
                         autoPanPaddingBottomRight: [40, 40]
                     });
                     marker.on('popupopen', (e) => {
+                        trackEvent('profile_open', getVenueAnalyticsParams(venue));
                         const target = e.popup.getLatLng();
                         map.panTo(target, { animate: true });
                         // Nudge popup fully into view; try a stronger upward pan
@@ -1673,6 +1871,7 @@
             });
 
             // Update count
+            lastVisibleVenueCount = visibleCount;
             document.getElementById('venue-count').textContent = visibleCount;
             const mobileCountEl = document.getElementById('venue-count-mobile');
             if (mobileCountEl) {
@@ -1762,6 +1961,11 @@
             setLanguage(currentLang, { skipUrlUpdate: true });
             setupAccordions();
             handleResize();
+            trackEvent('map_view', {
+                venue_count: venues.length,
+                visible_venues: lastVisibleVenueCount,
+                embedded: window.parent !== window
+            });
         }
 
         startApp();
