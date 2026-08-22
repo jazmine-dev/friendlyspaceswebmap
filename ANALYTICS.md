@@ -29,8 +29,8 @@ Venue events include `partner_id`, `partner_name`, `partner_city`,
 `partner_category`, `surface` (`web_map`) and `map_language`. The stable
 `partner_id` comes from the shared venue JSON `slug` field.
 
-Filter events include `filter_category`, `filter_value`, `filter_state`,
-`active_filter_count` and `visible_venues`. Search events include a sanitized
+Filter events include `filter_type`, `filter_value`, `filter_source`,
+`filter_state`, `active_filter_count` and `visible_venues`. Search events include a sanitized
 `search_term`, `search_method`, `search_results` and `active_filter_count`.
 
 Add `?analytics_debug=1` to the standalone map URL when verifying events in GA4

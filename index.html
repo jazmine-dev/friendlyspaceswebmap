@@ -1492,8 +1492,9 @@
             updateMap();
             updateFilterCount();
             trackEvent('filter_use', {
-                filter_category: category,
+                filter_type: category,
                 filter_value: value,
+                filter_source: ANALYTICS_SURFACE,
                 filter_state: filterState,
                 active_filter_count: Object.values(activeFilters).flat().length,
                 visible_venues: lastVisibleVenueCount
