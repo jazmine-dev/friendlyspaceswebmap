@@ -1007,7 +1007,17 @@
         ];
 
         let venues = [...embeddedVenues];
+        const REMOTE_APP_ORIGIN = 'https://app.friendlyspaces.ch/';
         const REMOTE_VENUES_URL = 'https://app.friendlyspaces.ch/data/venues.json';
+
+        function resolveVenueAssetUrl(assetPath) {
+            if (typeof assetPath !== 'string' || !assetPath.trim()) return '';
+            try {
+                return new URL(assetPath, REMOTE_APP_ORIGIN).toString();
+            } catch (err) {
+                return assetPath;
+            }
+        }
 
         async function loadVenues() {
             try {
@@ -1588,7 +1598,7 @@
             if (venue.images && venue.images.length > 0) {
                 const sliderId = `slider-${venue.name.replace(/\s+/g, '-').toLowerCase()}`;
                 const imagesHtml = venue.images.map((img, i) =>
-                    `<img src="${img}" alt="${venue.name}" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async" ${i === 0 ? 'fetchpriority="high"' : 'fetchpriority="low"'} width="320" height="150">`
+                    `<img src="${resolveVenueAssetUrl(img)}" alt="${venue.name}" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async" ${i === 0 ? 'fetchpriority="high"' : 'fetchpriority="low"'} width="320" height="150">`
                 ).join('');
                 const dotsHtml = venue.images.map((_, i) =>
                     `<span class="slider-dot ${i === 0 ? 'active' : ''}" data-slide="${i}"></span>`
