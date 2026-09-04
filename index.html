@@ -1195,12 +1195,14 @@
             position: 'bottomright'
         }).addTo(map);
 
-        // swisstopo's light grey national map: free, no API key, open government data.
-        // (CARTO's free basemaps started demanding a key and watermarking tiles.)
-        L.tileLayer('https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/{z}/{x}/{y}.jpeg', {
-            attribution: '&copy; <a href="https://www.swisstopo.admin.ch/">swisstopo</a>',
-            maxZoom: 20,
-            maxNativeZoom: 18
+        // Esri's Light Gray Canvas: free, no API key, and visually the same clean
+        // grey style as the CARTO light basemap the app was designed on (CARTO's
+        // free tiles now demand a key and watermark otherwise). Native tiles stop
+        // at zoom 16; Leaflet upscales beyond that.
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, OpenStreetMap contributors',
+            maxZoom: 19,
+            maxNativeZoom: 16
         }).addTo(map);
 
         // Initialize marker cluster group
